@@ -11,7 +11,15 @@
         --bs-primary: #070769;
         --bs-primary-rgb: 7,7,105;
       }
-      /* REMOVED body padding-top */
+      /* CORRECTED: Removed padding-top, adjusted flexbox */
+      body {
+         display: flex;
+         flex-direction: column;
+         min-height: 100vh;
+      }
+      .main-content-wrapper {
+          flex: 1; /* Allows content to grow */
+      }
       .hero-section {
         position: relative;
         height: 60vh;
@@ -66,15 +74,6 @@
         width: 400px;
         max-width: 90vw;
       }
-       /* Ensure footer stays down */
-       body {
-         display: flex;
-         flex-direction: column;
-         min-height: 100vh;
-       }
-       .main-content-wrapper { /* Add a wrapper for main content */
-          flex: 1;
-       }
        footer {
          margin-top: auto; /* Pushes footer down */
        }
@@ -96,7 +95,7 @@
     </nav>
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="menuSidebar" aria-labelledby="menuSidebarLabel">
-      <div class="offcanvas-header">
+       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="menuSidebarLabel">Menu</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
@@ -136,7 +135,7 @@
       </div>
 
       <div class="container my-5">
-        <h2 class="text-center mb-4">Expiration Management</h2>
+         <h2 class="text-center mb-4">Expiration Management</h2>
         <div id="portfolioCarousel" class="carousel slide" data-bs-ride="carousel">
           <div class="carousel-indicators">
             <button type="button" data-bs-target="#portfolioCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
@@ -197,7 +196,7 @@
 
     <footer class="bg-dark text-white p-5">
       <div class="container">
-        <div class="row">
+         <div class="row">
           <div class="col-md-3 mb-4">
             <h5 class="mb-3">Smart Plate</h5>
             <p class="text-white-50">Copyright &copy; 2025 Gategroup. <br>All rights reserved.</p>

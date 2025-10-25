@@ -11,7 +11,7 @@
         --bs-primary: #070769;
         --bs-primary-rgb: 7,7,105;
       }
-      /* REMOVED body padding-top */
+      /* CORRECTED: Removed padding-top, adjusted flexbox */
       body {
         display: flex;
         flex-direction: column;
@@ -39,13 +39,16 @@
         width: 400px;
         max-width: 90vw;
       }
+       footer {
+         margin-top: auto; /* Pushes footer down */
+       }
     </style>
 </head>
 
 <body>
 
     <nav class="navbar navbar-dark bg-primary sticky-top">
-      <div class="container-fluid">
+       <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuSidebar" aria-controls="menuSidebar">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -57,7 +60,7 @@
     </nav>
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="menuSidebar" aria-labelledby="menuSidebarLabel">
-      <div class="offcanvas-header">
+       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="menuSidebarLabel">Menu</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
@@ -99,7 +102,7 @@
     </button>
     <div class="collapse" id="chatWindow">
        <div class="card shadow-lg">
-         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
            <span>Chat Assistant</span>
            <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-label="Close"></button>
          </div>
@@ -113,9 +116,9 @@
        </div>
     </div>
 
-    <footer class="bg-dark text-white p-5 mt-auto">
+    <footer class="bg-dark text-white p-5">
       <div class="container">
-        <div class="row">
+         <div class="row">
           <div class="col-md-3 mb-4">
             <h5 class="mb-3">Smart Plate</h5>
             <p class="text-white-50">Copyright &copy; 2025 Gategroup. <br>All rights reserved.</p>

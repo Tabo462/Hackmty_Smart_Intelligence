@@ -11,14 +11,13 @@
         --bs-primary: #070769;
         --bs-primary-rgb: 7,7,105;
       }
-      /* REMOVED body padding-top */
       body {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
       }
       .main-content {
-        flex: 1; /* Allows content to grow and push footer down */
+        flex: 1;
       }
       #chatButton {
         position: fixed;
@@ -39,6 +38,27 @@
         width: 400px;
         max-width: 90vw;
       }
+       footer {
+         margin-top: auto;
+       }
+       /* Style for selected products list */
+       #selectedProductsList {
+         list-style-type: none;
+         padding-left: 0;
+       }
+       #selectedProductsList li {
+         background-color: #e9ecef;
+         margin-bottom: 5px;
+         padding: 5px 10px;
+         border-radius: 4px;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+       }
+       #selectedProductsList button {
+           padding: 0.1rem 0.4rem;
+           font-size: 0.8rem;
+       }
     </style>
 </head>
 
@@ -90,33 +110,57 @@
         <div class="col-12 p-3">
           <h2>Input Flight Information</h2>
           <form id="prediction-form" novalidate>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="flightId" class="form-label">Flight-ID</label>
-                <input type="text" class="form-control" id="flightId" required>
-              </div>
-              <div class="col-md-6">
-                <label for="origin" class="form-label">Origin</label>
-                <input type="text" class="form-control" id="origin" required>
-              </div>
+            <div class="row g-3 mb-4 border-bottom pb-3">
                <div class="col-md-6">
-                <label for="flightType" class="form-label">Flight Type</label>
-                <input type="text" class="form-control" id="flightType" required>
-              </div>
-              <div class="col-md-6">
-                <label for="serviceType" class="form-label">Service Type (Retail or Pick & Pack)</label>
-                <input type="text" class="form-control" id="serviceType" required>
-                <div class="invalid-feedback">
-                  Service Type must be 'Retail' or 'Pick & Pack'.
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label for="passengerCount" class="form-label">Passenger Count</label>
-                <input type="number" class="form-control" id="passengerCount" required>
-              </div>
-               <div class="col-12 mt-4">
-                 <button type="submit" class="btn btn-primary">Get Prediction</button>
+                 <label for="flightId" class="form-label">Flight-ID</label>
+                 <input type="text" class="form-control" id="flightId" required maxlength="7">
+                 <div class="invalid-feedback">Please provide a Flight ID (max 7 characters).</div>
                </div>
+               <div class="col-md-6">
+                 <label for="origin" class="form-label">Origin</label>
+                 <input type="text" class="form-control" id="origin" required maxlength="4">
+                 <div class="invalid-feedback">Please provide an Origin code (max 4 characters).</div>
+               </div>
+               <div class="col-md-6">
+                 <label for="flightType" class="form-label">Flight Type</label>
+                 <input type="text" class="form-control" id="flightType" required placeholder="e.g., short-haul">
+                 <div class="invalid-feedback">Must be 'short-haul', 'medium-haul', or 'long-haul'.</div>
+               </div>
+               <div class="col-md-6">
+                 <label for="serviceType" class="form-label">Service Type</label>
+                 <input type="text" class="form-control" id="serviceType" required placeholder="Retail or Pick & Pack">
+                 <div class="invalid-feedback">Must be 'Retail' or 'Pick & Pack'.</div>
+               </div>
+               <div class="col-md-6">
+                 <label for="passengerCount" class="form-label">Passenger Count</label>
+                 <input type="number" class="form-control" id="passengerCount" required min="2" max="999">
+                 <div class="invalid-feedback">Must be a number between 2 and 999.</div>
+               </div>
+            </div>
+
+            <h4 class="mt-4">Select Products for Analysis</h4>
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-8">
+                    <label for="productSelect" class="form-label">Available Products</label>
+                    <select class="form-select" id="productSelect">
+                        <option selected disabled value="">Choose a product...</option>
+                        </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-secondary w-100" id="addProductBtn">Add Product</button>
+                </div>
+            </div>
+
+            <h5>Selected Products:</h5>
+            <ul id="selectedProductsList">
+                <li id="noProductsMsg" class="text-muted">No products added yet.</li>
+            </ul>
+             <div class="invalid-feedback d-block" id="productSelectionError" style="display: none;"> Please add at least one product.
+            </div>
+
+
+            <div class="col-12 mt-4">
+                 <button type="submit" class="btn btn-primary">Get Prediction</button>
             </div>
           </form>
         </div>
@@ -126,7 +170,7 @@
         <div class="col-12 p-3">
           <h3>Prediction for Flight <span id="predictedFlightId">[Flight ID]</span></h3>
           <div id="predictionResultArea">
-            <p class="text-muted">Enter flight details above to get predictions.</p>
+            <p class="text-muted">Enter flight details and add products above to get predictions.</p>
           </div>
         </div>
       </div>
@@ -151,7 +195,7 @@
        </div>
     </div>
 
-    <footer class="bg-dark text-white p-5 mt-auto">
+    <footer class="bg-dark text-white p-5">
       <div class="container">
         <div class="row">
           <div class="col-md-3 mb-4">
@@ -188,63 +232,205 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      // --- Available Products Data (Extracted from CSV) ---
+      const availableProducts = {
+        'Bread Roll Pack': 0.35,
+        'Butter Cookies 75g': 0.75,
+        'Sparkling Water 330ml': 0.45,
+        'Still Water 500ml': 0.5,
+        'Chocolate Bar 50g': 0.8,
+        'Herbal Tea Bag': 0.06,
+        'Juice 200ml': 0.55,
+        'Snack Box Economy': 2.1,
+        'Instant Coffee Stick': 0.08
+        // Add more products here if needed
+      };
+
+      // --- DOM Elements ---
+      const form = document.getElementById('prediction-form');
+      const flightIdInput = document.getElementById('flightId');
+      const originInput = document.getElementById('origin');
+      const flightTypeInput = document.getElementById('flightType');
+      const serviceTypeInput = document.getElementById('serviceType');
+      const passengerCountInput = document.getElementById('passengerCount');
+      const productSelect = document.getElementById('productSelect');
+      const addProductBtn = document.getElementById('addProductBtn');
+      const selectedProductsList = document.getElementById('selectedProductsList');
+      const noProductsMsg = document.getElementById('noProductsMsg');
+      const productSelectionError = document.getElementById('productSelectionError');
+      const predictedFlightIdSpan = document.getElementById('predictedFlightId');
+      const predictionResultArea = document.getElementById('predictionResultArea');
+
+      // --- State for Selected Products ---
+      let selectedProductsData = []; // Array to store { name: '...', cost: ... }
+
+      // --- Populate Product Dropdown ---
+      function populateProductDropdown() {
+          Object.keys(availableProducts).sort().forEach(productName => {
+              const option = document.createElement('option');
+              option.value = productName;
+              option.textContent = `${productName} ($${availableProducts[productName].toFixed(2)})`;
+              productSelect.appendChild(option);
+          });
+      }
+
+      // --- Update Display of Selected Products ---
+      function updateSelectedProductsDisplay() {
+          selectedProductsList.innerHTML = ''; // Clear current list
+          if (selectedProductsData.length === 0) {
+              selectedProductsList.appendChild(noProductsMsg); // Show 'No products' message
+               productSelectionError.style.display = 'none'; // Hide error initially
+          } else {
+              noProductsMsg.remove(); // Hide 'No products' message
+               productSelectionError.style.display = 'none'; // Hide error if products are added
+              selectedProductsData.forEach((product, index) => {
+                  const li = document.createElement('li');
+                  li.textContent = `${product.name} ($${product.cost.toFixed(2)})`;
+
+                  const removeBtn = document.createElement('button');
+                  removeBtn.textContent = 'Remove';
+                  removeBtn.type = 'button';
+                  removeBtn.classList.add('btn', 'btn-sm', 'btn-outline-danger');
+                  removeBtn.onclick = () => removeProduct(index); // Add remove functionality
+
+                  li.appendChild(removeBtn);
+                  selectedProductsList.appendChild(li);
+              });
+          }
+      }
+
+      // --- Add Product Functionality ---
+      addProductBtn.addEventListener('click', () => {
+          const selectedName = productSelect.value;
+          if (selectedName && availableProducts[selectedName] !== undefined) {
+              // Check if product is already added
+              const isAlreadyAdded = selectedProductsData.some(p => p.name === selectedName);
+              if (!isAlreadyAdded) {
+                  selectedProductsData.push({
+                      name: selectedName,
+                      cost: availableProducts[selectedName]
+                  });
+                  updateSelectedProductsDisplay();
+                  productSelect.selectedIndex = 0; // Reset dropdown
+              } else {
+                  alert(`${selectedName} is already added.`); // Optional: User feedback
+              }
+          }
+      });
+
+      // --- Remove Product Functionality ---
+      function removeProduct(indexToRemove) {
+          selectedProductsData.splice(indexToRemove, 1); // Remove item from array by index
+          updateSelectedProductsDisplay();
+      }
+
+
+      // --- Form Validation & Submission ---
+      function resetValidation() {
+          form.querySelectorAll('.form-control, .form-select').forEach(input => {
+              input.classList.remove('is-invalid');
+          });
+           productSelectionError.style.display = 'none'; // Hide product error
+      }
+
+      form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          resetValidation();
+
+          let isValid = true;
+          let correctServiceType = '';
+          let correctFlightType = '';
+
+          // Validate basic flight info
+          const flightIdValue = flightIdInput.value.trim();
+          if (!flightIdValue || flightIdValue.length > 7) {
+              flightIdInput.classList.add('is-invalid'); isValid = false;
+          }
+          const originValue = originInput.value.trim();
+          if (!originValue || originValue.length > 4) {
+              originInput.classList.add('is-invalid'); isValid = false;
+          }
+          const flightTypeValueLower = flightTypeInput.value.trim().toLowerCase();
+          const validFlightTypes = ['short-haul', 'medium-haul', 'long-haul'];
+          if (!flightTypeValueLower || !validFlightTypes.includes(flightTypeValueLower)) {
+              flightTypeInput.classList.add('is-invalid'); isValid = false;
+          } else {
+              correctFlightType = flightTypeValueLower;
+          }
+          const serviceTypeValueLower = serviceTypeInput.value.trim().toLowerCase();
+          if (serviceTypeValueLower === 'retail') {
+              correctServiceType = 'Retail';
+          } else if (serviceTypeValueLower === 'pick & pack') {
+              correctServiceType = 'Pick & Pack';
+          } else {
+              serviceTypeInput.classList.add('is-invalid'); isValid = false;
+          }
+          const passengerCountValue = parseInt(passengerCountInput.value, 10);
+          if (isNaN(passengerCountValue) || passengerCountValue < 2 || passengerCountValue > 999) {
+              passengerCountInput.classList.add('is-invalid'); isValid = false;
+          }
+
+          // Validate product selection
+          if (selectedProductsData.length === 0) {
+               productSelectionError.style.display = 'block'; // Show product error
+              isValid = false;
+          }
+
+          // --- Submission ---
+          if (isValid) {
+              predictedFlightIdSpan.textContent = flightIdValue;
+              predictionResultArea.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div> <p>Getting prediction for flight ' + flightIdValue + '</p>';
+
+              // Extract product names and costs into separate lists
+              const productNames = selectedProductsData.map(p => p.name);
+              const unitCosts = selectedProductsData.map(p => p.cost);
+
+              const dataToSend = {
+                 flight_id: flightIdValue,
+                 origin: originValue,
+                 flight_type: correctFlightType,
+                 service_type: correctServiceType,
+                 passenger_count: passengerCountValue,
+                 product_name: productNames, // Add the list of names
+                 unit_cost: unitCosts       // Add the list of costs
+              };
+
+              console.log("Data to send:", dataToSend);
+
+              // --- TODO: Add your backend API call logic here ---
+              /*
+              fetch('/api/predict', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify(dataToSend)
+              })
+              .then(response => response.json())
+              .then(data => {
+                  // Assuming backend returns something like { prediction_results: [...] }
+                  // You'll need to format and display these results appropriately
+                  console.log("Received data:", data);
+                  predictionResultArea.innerHTML = `<p>Prediction results received. (See console for details)</p>`; // Update this line
+              })
+              .catch(error => {
+                  predictionResultArea.innerHTML = '<p class="text-danger">Error getting prediction.</p>';
+                  console.error('Prediction API Error:', error);
+              });
+              */
+          } else {
+              predictedFlightIdSpan.textContent = "[Flight ID]";
+              predictionResultArea.innerHTML = '<p class="text-danger">Please correct the errors in the form.</p>';
+          }
+      });
+
+       // --- Initialize ---
+      populateProductDropdown(); // Fill the dropdown on page load
+      updateSelectedProductsDisplay(); // Show the initial "No products" message
+
+      // Handle bfcache reload
       window.addEventListener('pageshow', function(event) {
         if (event.persisted) {
           window.location.reload();
         }
-      });
-
-      // Form validation and prediction update
-      const form = document.getElementById('prediction-form');
-      const flightIdInput = document.getElementById('flightId');
-      const serviceTypeInput = document.getElementById('serviceType'); // Get service type input
-      const predictedFlightIdSpan = document.getElementById('predictedFlightId');
-      const predictionResultArea = document.getElementById('predictionResultArea');
-
-      form.addEventListener('submit', function(event) {
-          event.preventDefault(); // Stop default form submission
-
-          // --- Service Type Validation ---
-          const serviceTypeValue = serviceTypeInput.value.trim().toLowerCase(); // Get value, trim spaces, make lowercase
-          const isValidServiceType = serviceTypeValue === 'retail' || serviceTypeValue === 'pick & pack';
-
-          // Reset validation state
-          serviceTypeInput.classList.remove('is-invalid');
-
-          if (!isValidServiceType) {
-            serviceTypeInput.classList.add('is-invalid'); // Show Bootstrap error style
-            return; // Stop processing if invalid
-          }
-          // --- End Validation ---
-
-
-          // If validation passes, update UI and prepare for API call
-          predictedFlightIdSpan.textContent = flightIdInput.value || "[Flight ID]";
-          predictionResultArea.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div> <p>Getting prediction for flight ' + (flightIdInput.value || '...') + '</p>';
-
-          // --- TODO: Add your backend API call logic here ---
-          // Example:
-          // fetch('/api/predict', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify({
-          //      flightId: flightIdInput.value,
-          //      origin: document.getElementById('origin').value,
-          //      flightType: document.getElementById('flightType').value,
-          //      serviceType: serviceTypeInput.value, // Send original case if needed
-          //      passengerCount: document.getElementById('passengerCount').value
-          //   })
-          // })
-          // .then(response => response.json())
-          // .then(data => {
-          //    predictionResultArea.innerHTML = `<p>Predicted Consumption: ${data.prediction}</p>`; // Display result
-          // })
-          // .catch(error => {
-          //    predictionResultArea.innerHTML = '<p class="text-danger">Error getting prediction.</p>';
-          //    console.error('Prediction API Error:', error);
-          // });
-          // --------------------------------------------------
-
       });
     </script>
 
