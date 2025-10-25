@@ -79,6 +79,7 @@ async def read_root():
         <h1>🚀 Web Scanner con FastAPI</h1>
         <p>Bienvenido al sistema de escaneo de códigos de barras.</p>
         <a href="/scanner">Ir al Scanner</a>
+        <a href="/main_code">Ir al Código Principal</a>
     </body>
     </html>
     """
@@ -91,6 +92,15 @@ async def scanner_page():
             return HTMLResponse(content=f.read())
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Error: Archivo scanner.html no encontrado</h1>", status_code=404)
+    
+@app.get("/main_code", response_class=HTMLResponse)
+async def main_code_page():
+    """Página principal del código"""
+    try:
+        with open("../frontend/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Error: Archivo index.html no encontrado</h1>", status_code=404)
 
 @app.post("/api/check_barcode", response_model=BarcodeResponse)
 async def check_barcode(request: BarcodeRequest):
@@ -196,6 +206,8 @@ async def predict_consumption(data: PredictRequest):
     Endpoint para predecir el consumo utilizando el modelo de Random Forest
     """
     try:
+        logger.info(f"🔄 Recibiendo request de predicción: {data}")
+        
         from aidata.Random_Forest_Regression import AirlineConsumptionPredictor
 
         # Cargar el modelo entrenado
@@ -203,20 +215,50 @@ async def predict_consumption(data: PredictRequest):
         if predictor is None:
             raise HTTPException(status_code=500, detail="Modelo no cargado. Asegúrese de entrenar y guardar el modelo primero.")
 
-        # Realizar la predicción
-        prediction = predictor.predict_consumption(
-            origin=data.origin,
-            flight_type=data.flight_type,
-            service_type=data.service_type,
-            passenger_count=data.passenger_count,
-            product_name=data.product_name[0],
-            unit_cost=data.unit_cost[0],
-            has_issues=0
-        )
+        # Realizar predicciones para TODOS los productos
+        predictions = []
+        total_units = 0
+        total_cost = 0
+        
+        for i, (product_name, unit_cost) in enumerate(zip(data.product_name, data.unit_cost)):
+            prediction = predictor.predict_consumption(
+                origin=data.origin,
+                flight_type=data.flight_type,
+                service_type=data.service_type,
+                passenger_count=data.passenger_count,
+                product_name=product_name,
+                unit_cost=unit_cost,
+                has_issues=0
+            )
+            
+            product_total_cost = prediction * unit_cost
+            total_units += prediction
+            total_cost += product_total_cost
+            
+            predictions.append({
+                "product_name": product_name,
+                "unit_cost": unit_cost,
+                "predicted_units": prediction,
+                "total_cost": product_total_cost
+            })
 
-        print(f"✅ Predicción exitosa! Consumo estimado: {prediction:.2f} unidades")
+        logger.info(f"✅ Predicción exitosa! Total: {total_units} unidades, ${total_cost:.2f}")
 
-        return {"predicted_consumption": prediction}
+        return {
+            "flight_info": {
+                "origin": data.origin,
+                "flight_type": data.flight_type,
+                "service_type": data.service_type,
+                "passenger_count": data.passenger_count
+            },
+            "products": predictions,
+            "totals": {
+                "total_units": total_units,
+                "total_cost": round(total_cost, 2),
+                "units_per_passenger": round(total_units / data.passenger_count, 2),
+                "cost_per_passenger": round(total_cost / data.passenger_count, 2)
+            }
+        }
 
     except Exception as e:
         logger.error(f"❌ Error en predict_consumption: {e}")
