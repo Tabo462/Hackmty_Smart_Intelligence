@@ -56,7 +56,7 @@ async def serve_frontend():
         """)
 
 # Servir la página de predicciones
-@app.get("/predictions")
+@app.get("/pre_flight_predictions.html")
 async def serve_predictions():
     """Servir la página de predicciones"""
     try:
