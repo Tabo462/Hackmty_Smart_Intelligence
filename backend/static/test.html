@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>QuaggaJS Barcode Scanner - Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #E1F1F6;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: #070769;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(7, 7, 105, 0.3);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .gategroup-text {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .smart-plate-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #070769;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        /* Scanner container styling */
+        #scanner-container {
+            width: 100%;
+            max-width: 700px;
+            height: 500px;
+            margin: 0 auto;
+            position: relative;
+            border: 3px solid #E1F1F6;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        canvas.drawing, canvas.drawingBuffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .start-btn {
+            background: #070769;
+            color: white;
+        }
+        
+        .start-btn:hover:not(:disabled) {
+            background: #0a0a8a;
+        }
+        
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .stop-btn:hover:not(:disabled) {
+            background: #c82333;
+        }
+        
+        .camera-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .camera-btn:hover {
+            background: #e68900;
+        }
+        
+        .history-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .history-btn:hover {
+            background: #138496;
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background: #d4edda;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .status.scanning {
+            background: #E1F1F6;
+            color: #070769;
+            border: 2px solid #070769;
+        }
+        
+        .status.stopped {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #dee2e6;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        /* Modal styling */
+        #cameraModal {
+            background: rgba(7, 7, 105, 0.8);
+        }
+        
+        #cameraModal > div {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        #cameraModal h3 {
+            color: #070769;
+            margin-bottom: 20px;
+        }
+        
+        #cameraModal input[type="radio"] {
+            accent-color: #070769;
+        }
+        
+        #cameraModal label {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        #cancelCamera {
+            background: #6c757d;
+            color: white;
+        }
+        
+        #cancelCamera:hover {
+            background: #5a6268;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            #scanner-container {
+                height: 400px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 200px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header matching the main page design -->
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-icon">☰</div>
+        </div>
+        <div class="header-right">
+            <span class="gategroup-text">gategroup</span>
+            <span class="smart-plate-text">Smart Plate</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <h1>🔍 Barcode Scanner</h1>
+            
+            <div class="controls">
+                <button id="startBtn" class="start-btn">Start Scanner</button>
+                <button id="stopBtn" class="stop-btn" disabled>Stop Scanner</button>
+                <button id="cameraBtn" class="camera-btn">Select Camera</button>
+                <button id="historyBtn" class="history-btn">Show History</button>
+            </div>
+            
+            <div id="status" class="status stopped">Scanner stopped</div>
+            
+            <div id="scanner-container"></div>
+            
+            <div id="result" class="result" style="display: none;">
+                <strong>Detected Barcode:</strong> <span id="barcodeResult"></span>
+            </div>
+            
+            <div id="error" class="result error" style="display: none;">
+                <strong>Error:</strong> <span id="errorMessage"></span>
+            </div>
+            
+            <div id="history" class="result" style="display: none;">
+                <strong>Detection History:</strong>
+                <div id="historyContent"></div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Camera Selection Modal -->
+     <div id="cameraModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
+         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; max-width: 500px; width: 90%;">
+             <h3 style="margin-top: 0;">Select Camera</h3>
+             <div id="cameraList"></div>
+             <div style="margin-top: 20px; text-align: right;">
+                 <button id="cancelCamera" style="padding: 10px 20px; border: none; border-radius: 8px; margin-right: 10px;">Cancel</button>
+             </div>
+         </div>
+     </div>
+
+    <!-- Include QuaggaJS script -->
+    <script src="https://cdn.rawgit.com/serratus/quaggaJS/0420d5e0/dist/quagga.min.js"></script>
+    
+    <script>
+        // Global variables
+        let isScanning = false;
+        let availableCameras = [];
+        let selectedCameraId = null;
+        
+         // DOM elements
+         const startBtn = document.getElementById('startBtn');
+         const stopBtn = document.getElementById('stopBtn');
+         const cameraBtn = document.getElementById('cameraBtn');
+         const historyBtn = document.getElementById('historyBtn');
+         const status = document.getElementById('status');
+         const result = document.getElementById('result');
+         const error = document.getElementById('error');
+         const history = document.getElementById('history');
+         const barcodeResult = document.getElementById('barcodeResult');
+         const errorMessage = document.getElementById('errorMessage');
+         const historyContent = document.getElementById('historyContent');
+         const cameraModal = document.getElementById('cameraModal');
+         const cameraList = document.getElementById('cameraList');
+         const cancelCamera = document.getElementById('cancelCamera');
+         
+         // Event listeners
+         startBtn.addEventListener('click', startScanner);
+         stopBtn.addEventListener('click', stopScanner);
+         cameraBtn.addEventListener('click', showCameraSelection);
+         historyBtn.addEventListener('click', toggleHistory);
+         cancelCamera.addEventListener('click', hideCameraModal);
+        
+        function updateStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        function showResult(code) {
+            barcodeResult.textContent = code;
+            result.style.display = 'block';
+            error.style.display = 'none';
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            error.style.display = 'block';
+            result.style.display = 'none';
+        }
+        
+         function hideMessages() {
+             result.style.display = 'none';
+             error.style.display = 'none';
+         }
+         
+         function toggleHistory() {
+             if (history.style.display === 'none') {
+                 showHistory();
+             } else {
+                 hideHistory();
+             }
+         }
+         
+         function showHistory() {
+             if (detectionHistory.length === 0) {
+                 historyContent.innerHTML = '<p>No detections yet</p>';
+             } else {
+                 let html = '<ul>';
+                 detectionHistory.forEach((item, index) => {
+                     const time = new Date(item.timestamp).toLocaleTimeString();
+                     html += `<li><strong>${item.code}</strong> - Confidence: ${(item.confidence * 100).toFixed(1)}% - ${time}</li>`;
+                 });
+                 html += '</ul>';
+                 historyContent.innerHTML = html;
+             }
+             history.style.display = 'block';
+             historyBtn.textContent = 'Hide History';
+         }
+         
+         function hideHistory() {
+             history.style.display = 'none';
+             historyBtn.textContent = 'Show History';
+         }
+         
+         async function showCameraSelection() {
+             try {
+                 updateStatus('Loading cameras...', 'scanning');
+                 
+                 // Get available cameras
+                 const devices = await navigator.mediaDevices.enumerateDevices();
+                 availableCameras = devices.filter(device => device.kind === 'videoinput');
+                 
+                 if (availableCameras.length === 0) {
+                     showError('No cameras found');
+                     updateStatus('Error: No cameras available', 'error');
+                     return;
+                 }
+                 
+                 // Build camera list
+                 let html = '';
+                 availableCameras.forEach((camera, index) => {
+                     const label = camera.label || `Camera ${index + 1}`;
+                     const isSelected = selectedCameraId === camera.deviceId ? 'checked' : '';
+                     html += `
+                         <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                             <input type="radio" name="camera" value="${camera.deviceId}" id="camera_${index}" ${isSelected}>
+                             <label for="camera_${index}" style="margin-left: 10px; cursor: pointer;">${label}</label>
+                         </div>
+                     `;
+                 });
+                 
+                 cameraList.innerHTML = html;
+                 
+                 // Add event listeners to radio buttons
+                 const radioButtons = cameraList.querySelectorAll('input[name="camera"]');
+                 radioButtons.forEach(radio => {
+                     radio.addEventListener('change', function() {
+                         selectedCameraId = this.value;
+                         console.log('Selected camera:', this.value);
+                         hideCameraModal();
+                         updateStatus(`Camera selected: ${this.nextElementSibling.textContent}`, 'stopped');
+                     });
+                 });
+                 
+                 cameraModal.style.display = 'block';
+                 updateStatus('Select a camera from the list', 'stopped');
+                 
+             } catch (error) {
+                 console.error('Error getting cameras:', error);
+                 showError(`Error accessing cameras: ${error.message}`);
+                 updateStatus('Error: Cannot access cameras', 'error');
+             }
+         }
+         
+         function hideCameraModal() {
+             cameraModal.style.display = 'none';
+         }
+        
+         // Variables para estabilizar el reconocimiento
+         let lastDetectedCode = '';
+         let detectionCount = 0;
+         let detectionHistory = [];
+         const REQUIRED_CONSISTENT_DETECTIONS = 2; // Requerir 2 detecciones consistentes para respuesta más rápida
+         const DETECTION_TIMEOUT = 2000; // 2 segundos para resetear
+         
+         function startScanner() {
+             console.log('Starting QuaggaJS scanner...');
+             updateStatus('Initializing scanner...', 'scanning');
+             hideMessages();
+             
+             // Reset detection variables
+             lastDetectedCode = '';
+             detectionCount = 0;
+             detectionHistory = [];
+             
+             // Check if QuaggaJS is available
+             if (typeof Quagga === 'undefined') {
+                 showError('QuaggaJS library not loaded');
+                 updateStatus('Error: QuaggaJS not available', 'error');
+                 return;
+             }
+             
+             // Check camera support
+             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                 showError('Camera API not supported in this browser');
+                 updateStatus('Error: Camera not supported', 'error');
+                 return;
+             }
+             
+             // Build constraints with selected camera
+             const constraints = {
+                 width: { ideal: 1280, max: 1280 },
+                 height: { ideal: 720, max: 720 },
+                 facingMode: "environment",
+                 frameRate: { ideal: 10, max: 10 },  // Limitar framerate a exactamente 10 FPS
+                 aspectRatio: { ideal: 16/9 }
+             };
+             
+             // Add deviceId if a specific camera is selected
+             if (selectedCameraId) {
+                 constraints.deviceId = { exact: selectedCameraId };
+                 console.log('Using selected camera:', selectedCameraId);
+             }
+             
+             const config = {
+                 inputStream: {
+                     name: "Live",
+                     type: "LiveStream",
+                     target: document.querySelector('#scanner-container'),
+                     constraints: constraints,
+                     area: { // Área de escaneo expandida para mejor detección
+                         top: "10%",
+                         right: "10%",
+                         left: "10%",
+                         bottom: "10%"
+                     }
+                 },
+                 decoder: {
+                     readers: [
+                         "ean_reader",           // EAN-13, EAN-8
+                         "ean_8_reader",        // EAN-8 specific
+                         "code_128_reader",     // Code 128 (very common)
+                         "code_39_reader",      // Code 39 (common)
+                         "codabar_reader",      // Codabar
+                         "upc_reader",          // UPC-A, UPC-E
+                         "upc_e_reader",        // UPC-E specific
+                         "i2of5_reader"         // Interleaved 2 of 5
+                     ],
+                     debug: {
+                         drawBoundingBox: false,
+                         showFrequency: false,
+                         drawScanline: false,
+                         showPattern: false
+                     }
+                 },
+                 locate: true,
+                 locator: {
+                     halfSample: true,
+                     patchSize: "large", // Patch más grande para mejor detección
+                     showCanvas: false,
+                     showPatches: false,
+                     showFoundPatches: false,
+                     showSkeleton: false,
+                     showLabels: false,
+                     showPatchLabels: false,
+                     showBoundingBox: false,
+                     showScanningRegion: false
+                 },
+                 frequency: 3 // Aumentar frecuencia para mejor detección
+             };
+             
+             console.log('QuaggaJS config:', config);
+             
+             Quagga.init(config, function(err) {
+                 if (err) {
+                     console.error('QuaggaJS initialization error:', err);
+                     showError(`Initialization failed: ${err.message || err}`);
+                     updateStatus('Error: Initialization failed', 'error');
+                     return;
+                 }
+                 
+                 console.log("QuaggaJS initialized successfully.");
+                 updateStatus('Scanner running - Point camera at barcode', 'scanning');
+                 
+                 // Start scanning
+                 Quagga.start();
+                 isScanning = true;
+                 
+                 // Verificar framerate real de la cámara
+                 setTimeout(() => {
+                     const videoElement = document.querySelector('video');
+                     if (videoElement) {
+                         console.log('Video element found, checking framerate...');
+                         console.log('Video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+                         
+                         // Intentar obtener información del stream
+                         const stream = videoElement.srcObject;
+                         if (stream) {
+                             const videoTrack = stream.getVideoTracks()[0];
+                             if (videoTrack) {
+                                 const settings = videoTrack.getSettings();
+                                 console.log('Camera settings:', settings);
+                                 console.log('Actual framerate:', 10);
+                                 
+                                 if (settings.frameRate) {
+                                     updateStatus(`Scanner running - Framerate: ${settings.frameRate}fps`, 'scanning');
+                                 }
+                             }
+                         }
+                     }
+                 }, 1000);
+                 
+                 // Update buttons
+                 startBtn.disabled = true;
+                 stopBtn.disabled = false;
+             });
+             
+             // Handle barcode detection with stabilization
+             Quagga.onDetected(function(result) {
+                 const code = result.codeResult.code;
+                 const confidence = result.codeResult.decodedCodes ? 
+                     result.codeResult.decodedCodes.reduce((acc, curr) => acc + (1 - curr.error), 0) / result.codeResult.decodedCodes.length : 0;
+                 
+                 console.log("Barcode detected:", code, "Confidence:", confidence);
+                 
+                 // Solo procesar códigos con confianza aceptable (reducido para mejor detección)
+                 if (confidence < 0.5) {
+                     console.log("Low confidence detection, ignoring:", code);
+                     return;
+                 }
+                 
+                 // Verificar si es el mismo código que antes
+                 if (code === lastDetectedCode) {
+                     detectionCount++;
+                     console.log(`Same code detected ${detectionCount} times:`, code);
+                     
+                     // Si hemos detectado el mismo código varias veces, mostrarlo
+                     if (detectionCount >= REQUIRED_CONSISTENT_DETECTIONS) {
+                         showResult(code);
+                         updateStatus(`Barcode confirmed: ${code}`, 'scanning');
+                         
+                         // Opcional: parar después de confirmación
+                         // stopScanner();
+                     }
+                 } else {
+                     // Nuevo código detectado
+                     lastDetectedCode = code;
+                     detectionCount = 1;
+                     console.log("New code detected:", code);
+                     
+                     // Agregar a historial para análisis
+                     detectionHistory.push({
+                         code: code,
+                         timestamp: Date.now(),
+                         confidence: confidence
+                     });
+                     
+                     // Mantener solo los últimos 10
+                     if (detectionHistory.length > 10) {
+                         detectionHistory.shift();
+                     }
+                 }
+                 
+                 // Resetear contador después de un tiempo
+                 setTimeout(() => {
+                     if (detectionCount > 0) {
+                         detectionCount = 0;
+                         lastDetectedCode = '';
+                     }
+                 }, DETECTION_TIMEOUT);
+             });
+         }
+        
+        function stopScanner() {
+            if (isScanning) {
+                console.log('Stopping QuaggaJS scanner...');
+                Quagga.stop();
+                isScanning = false;
+                
+                updateStatus('Scanner stopped', 'stopped');
+                
+                // Update buttons
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (isScanning) {
+                Quagga.stop();
+            }
+        });
+        
+         // Initialize default camera on page load
+         async function initializeDefaultCamera() {
+             try {
+                 const devices = await navigator.mediaDevices.enumerateDevices();
+                 const cameras = devices.filter(device => device.kind === 'videoinput');
+                 
+                 if (cameras.length > 0) {
+                     // Try to find rear camera first (environment facing)
+                     const rearCamera = cameras.find(camera => 
+                         camera.label.toLowerCase().includes('rear') || 
+                         camera.label.toLowerCase().includes('back') ||
+                         camera.label.toLowerCase().includes('environment')
+                     );
+                     
+                     if (rearCamera) {
+                         selectedCameraId = rearCamera.deviceId;
+                         console.log('Auto-selected rear camera:', rearCamera.label);
+                         updateStatus(`Auto-selected: ${rearCamera.label}`, 'stopped');
+                     } else {
+                         // Fallback to first camera
+                         selectedCameraId = cameras[0].deviceId;
+                         console.log('Auto-selected first camera:', cameras[0].label);
+                         updateStatus(`Auto-selected: ${cameras[0].label}`, 'stopped');
+                     }
+                 } else {
+                     updateStatus('No cameras found - Click "Select Camera"', 'stopped');
+                 }
+             } catch (error) {
+                 console.error('Error initializing camera:', error);
+                 updateStatus('Error accessing cameras', 'error');
+             }
+         }
+         
+         // Initialize on page load
+         document.addEventListener('DOMContentLoaded', function() {
+             initializeDefaultCamera();
+         });
+         
+         // Initial status
+         updateStatus('Loading cameras...', 'stopped');
+    </script>
+</body>
+</html>
