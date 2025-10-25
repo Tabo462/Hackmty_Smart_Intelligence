@@ -1,1 +1,0 @@
-# Snowflake integrations package
