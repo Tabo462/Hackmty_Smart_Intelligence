@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Plate - Pre-Flight Predictions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      :root {
+        --bs-primary: #070769;
+        --bs-primary-rgb: 7,7,105;
+      }
+      /* REMOVED body padding-top */
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .main-content {
+        flex: 1; /* Allows content to grow and push footer down */
+      }
+      #chatButton {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #chatWindow {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        z-index: 1055;
+        width: 400px;
+        max-width: 90vw;
+      }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark bg-primary sticky-top">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuSidebar" aria-controls="menuSidebar">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand d-flex align-items-center" href="index.html">
+          <img src="gategroup_logo.jpg" alt="Gategroup Logo" height="24" class="me-2">
+          <span>Smart Plate</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="menuSidebar" aria-labelledby="menuSidebarLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="menuSidebarLabel">Menu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <ul class="nav flex-column nav-pills">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+              Expiration
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="exp_adding.html">Exp - Adding</a></li>
+              <li><a class="dropdown-item" href="exp_dashboard.html">Exp - Dashboard</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="pre_flight_predictions.html">Pre-Flight Predictions</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Other Link</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container-fluid mt-4 main-content">
+      <div class="row mb-5">
+        <div class="col-12 p-3">
+          <h2>Input Flight Information</h2>
+          <form id="prediction-form" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="flightId" class="form-label">Flight-ID</label>
+                <input type="text" class="form-control" id="flightId" required>
+              </div>
+              <div class="col-md-6">
+                <label for="origin" class="form-label">Origin</label>
+                <input type="text" class="form-control" id="origin" required>
+              </div>
+               <div class="col-md-6">
+                <label for="flightType" class="form-label">Flight Type</label>
+                <input type="text" class="form-control" id="flightType" required>
+              </div>
+              <div class="col-md-6">
+                <label for="serviceType" class="form-label">Service Type (Retail or Pick & Pack)</label>
+                <input type="text" class="form-control" id="serviceType" required>
+                <div class="invalid-feedback">
+                  Service Type must be 'Retail' or 'Pick & Pack'.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="passengerCount" class="form-label">Passenger Count</label>
+                <input type="number" class="form-control" id="passengerCount" required>
+              </div>
+               <div class="col-12 mt-4">
+                 <button type="submit" class="btn btn-primary">Get Prediction</button>
+               </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <hr>
+      <div class="row mt-5">
+        <div class="col-12 p-3">
+          <h3>Prediction for Flight <span id="predictedFlightId">[Flight ID]</span></h3>
+          <div id="predictionResultArea">
+            <p class="text-muted">Enter flight details above to get predictions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg rounded-circle shadow" type="button" id="chatButton" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-expanded="false" aria-controls="chatWindow">
+      <img src="gemini_logo.png" alt="Gemini Logo" width="30" height="30" style="filter: brightness(0) invert(1);">
+    </button>
+    <div class="collapse" id="chatWindow">
+       <div class="card shadow-lg">
+         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+           <span>Chat Assistant</span>
+           <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-label="Close"></button>
+         </div>
+         <div class="card-body" style="height: 400px; overflow-y: scroll;">
+           <p><b>Assistant:</b> Hello! How can I help you?</p>
+         </div>
+         <div class="card-footer d-flex">
+           <input type="text" class="form-control" placeholder="Type your message...">
+           <button class="btn btn-primary ms-2">Send</button>
+         </div>
+       </div>
+    </div>
+
+    <footer class="bg-dark text-white p-5 mt-auto">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-3 mb-4">
+            <h5 class="mb-3">Smart Plate</h5>
+            <p class="text-white-50">Copyright &copy; 2025 Gategroup. <br>All rights reserved.</p>
+          </div>
+          <div class="col-md-3 mb-4">
+            <h5>Explore</h5>
+            <ul class="nav flex-column">
+              <li class="nav-item mb-2"><a href="index.html" class="nav-link p-0 text-white-50">Home</a></li>
+              <li class="nav-item mb-2"><a href="exp_dashboard.html" class="nav-link p-0 text-white-50">Dashboard</a></li>
+              <li class="nav-item mb-2"><a href="pre_flight_predictions.html" class="nav-link p-0 text-white-50">Predictions</a></li>
+              <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-white-50">About Us</a></li>
+            </ul>
+          </div>
+          <div class="col-md-3 mb-4">
+            <h5>Global Headquarters</h5>
+            <address class="text-white-50" style="font-style: normal;">
+              Gategroup<br>
+              Street Address 123<br>
+              Zurich, Switzerland
+            </address>
+          </div>
+          <div class="col-md-3 mb-4">
+            <h5>Legal</h5>
+            <ul class="nav flex-column">
+              <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-white-50">Terms & Conditions</a></li>
+              <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-white-50">Data Privacy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+
+      // Form validation and prediction update
+      const form = document.getElementById('prediction-form');
+      const flightIdInput = document.getElementById('flightId');
+      const serviceTypeInput = document.getElementById('serviceType'); // Get service type input
+      const predictedFlightIdSpan = document.getElementById('predictedFlightId');
+      const predictionResultArea = document.getElementById('predictionResultArea');
+
+      form.addEventListener('submit', function(event) {
+          event.preventDefault(); // Stop default form submission
+
+          // --- Service Type Validation ---
+          const serviceTypeValue = serviceTypeInput.value.trim().toLowerCase(); // Get value, trim spaces, make lowercase
+          const isValidServiceType = serviceTypeValue === 'retail' || serviceTypeValue === 'pick & pack';
+
+          // Reset validation state
+          serviceTypeInput.classList.remove('is-invalid');
+
+          if (!isValidServiceType) {
+            serviceTypeInput.classList.add('is-invalid'); // Show Bootstrap error style
+            return; // Stop processing if invalid
+          }
+          // --- End Validation ---
+
+
+          // If validation passes, update UI and prepare for API call
+          predictedFlightIdSpan.textContent = flightIdInput.value || "[Flight ID]";
+          predictionResultArea.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div> <p>Getting prediction for flight ' + (flightIdInput.value || '...') + '</p>';
+
+          // --- TODO: Add your backend API call logic here ---
+          // Example:
+          // fetch('/api/predict', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({
+          //      flightId: flightIdInput.value,
+          //      origin: document.getElementById('origin').value,
+          //      flightType: document.getElementById('flightType').value,
+          //      serviceType: serviceTypeInput.value, // Send original case if needed
+          //      passengerCount: document.getElementById('passengerCount').value
+          //   })
+          // })
+          // .then(response => response.json())
+          // .then(data => {
+          //    predictionResultArea.innerHTML = `<p>Predicted Consumption: ${data.prediction}</p>`; // Display result
+          // })
+          // .catch(error => {
+          //    predictionResultArea.innerHTML = '<p class="text-danger">Error getting prediction.</p>';
+          //    console.error('Prediction API Error:', error);
+          // });
+          // --------------------------------------------------
+
+      });
+    </script>
+
+</body>
+</html>
