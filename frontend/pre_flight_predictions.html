@@ -398,24 +398,82 @@
               console.log("Data to send:", dataToSend);
 
               // --- TODO: Add your backend API call logic here ---
-              /*
+              
               fetch('/api/predict', {
                  method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify(dataToSend)
               })
-              .then(response => response.json())
+              .then(response => {
+                console.log("Response status:", response.status);
+                
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+              })
               .then(data => {
-                  // Assuming backend returns something like { prediction_results: [...] }
-                  // You'll need to format and display these results appropriately
-                  console.log("Received data:", data);
-                  predictionResultArea.innerHTML = `<p>Prediction results received. (See console for details)</p>`; // Update this line
+                console.log("Received data:", data);
+                
+                // Create HTML for displaying results
+                let resultsHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Prediction Results for ${data.flight_info.origin} ${data.flight_info.flight_type} (${data.flight_info.service_type})</h5>
+                            <p class="mb-0">${data.flight_info.passenger_count} passengers</p>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Unit Cost</th>
+                                        <th>Predicted Units</th>
+                                        <th>Total Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                data.products.forEach(product => {
+                    resultsHTML += `
+                        <tr>
+                            <td>${product.product_name}</td>
+                            <td>$${product.unit_cost.toFixed(2)}</td>
+                            <td>${product.predicted_units}</td>
+                            <td>$${product.total_cost.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                resultsHTML += `
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <th colspan="2">TOTALS</th>
+                                        <th>${data.totals.total_units} units</th>
+                                        <th>$${data.totals.total_cost}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p><strong>Per Passenger:</strong> ${data.totals.units_per_passenger} units</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Cost Per Passenger:</strong> $${data.totals.cost_per_passenger}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                predictionResultArea.innerHTML = resultsHTML;
               })
               .catch(error => {
                   predictionResultArea.innerHTML = '<p class="text-danger">Error getting prediction.</p>';
                   console.error('Prediction API Error:', error);
               });
-              */
           } else {
               predictedFlightIdSpan.textContent = "[Flight ID]";
               predictionResultArea.innerHTML = '<p class="text-danger">Please correct the errors in the form.</p>';
