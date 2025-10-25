@@ -41,7 +41,7 @@ class PredictRequest(BaseModel):
     unit_cost: List[float]
 
 # Ruta principal - sirve el frontend
-@app.get("/")
+@app.get("/index.html")
 async def serve_frontend():
     """Servir la página principal del frontend"""
     try:
@@ -64,6 +64,25 @@ async def serve_predictions():
         return FileResponse(predictions_path)
     except:
         return HTMLResponse("<h1>Error: No se pudo cargar la página de predicciones</h1>")
+    
+# Servir la página de predicciones
+@app.get("/exp_adding.html")
+async def serve_exp_adding():
+    """Servir la página de exp_adding"""
+    try:
+        exp_adding_path = os.path.join(os.path.dirname(__file__), "../frontend/exp_adding.html")
+        return FileResponse(exp_adding_path)
+    except:
+        return HTMLResponse("<h1>Error: No se pudo cargar la página de exp_adding</h1>")
+    
+@app.get("/exp_dashboard.html")
+async def serve_exp_dashboard():
+    """Servir la página de exp_dashboard"""
+    try:
+        exp_dashboard_path = os.path.join(os.path.dirname(__file__), "../frontend/exp_dashboard.html")
+        return FileResponse(exp_dashboard_path)
+    except:
+        return HTMLResponse("<h1>Error: No se pudo cargar la página de exp_dashboard</h1>")
 
 # Servir archivos estáticos (CSS, JS, imágenes)
 @app.get("/media_files/{file_path:path}")
