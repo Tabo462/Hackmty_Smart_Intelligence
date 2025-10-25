@@ -59,5 +59,5 @@ def generar_audio_elevenlabs(texto_para_audio, nombre_archivo_salida):
 # --- Bloque de prueba (sin cambios) ---
 if __name__ == "__main__":
     print("--- Probando el Módulo de ElevenLabs ---")
-    texto_ejemplo = "Fer, gracias a ti el código funciono. Eres la mejor!"
+    texto_ejemplo = "Hola Jared, cómo estás? Tienes acento colombiano?"
     generar_audio_elevenlabs(texto_ejemplo, "mi_audio_de_prueba.mp3")
