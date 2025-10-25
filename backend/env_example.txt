@@ -1,0 +1,43 @@
+# ===========================================
+# CONFIGURACIÓN DEL WEB SCANNER
+# ===========================================
+# Copia este archivo como .env y completa con tus datos reales
+
+# ===========================================
+# CONFIGURACIÓN DE SNOWFLAKE
+# ===========================================
+# Obtén estos datos de tu cuenta de Snowflake
+SNOWFLAKE_ACCOUNT=tu_cuenta_snowflake.ejemplo
+SNOWFLAKE_USER=tu_usuario
+SNOWFLAKE_PASSWORD=tu_contraseña_segura
+SNOWFLAKE_DATABASE=tu_base_de_datos
+SNOWFLAKE_SCHEMA=PUBLIC
+SNOWFLAKE_WAREHOUSE=COMPUTE_WH
+
+# ===========================================
+# CONFIGURACIÓN DE ELEVENLABS
+# ===========================================
+# Obtén tu API key desde: https://elevenlabs.io/
+ELEVENLABS_API_KEY=tu_api_key_de_elevenlabs_aqui
+ELEVENLABS_VOICE_ID=pNInz6obpgDQGcFmaJgB
+
+# ===========================================
+# INSTRUCCIONES DE CONFIGURACIÓN
+# ===========================================
+# 1. Renombra este archivo de .env.example a .env
+# 2. Completa todos los valores con tus datos reales
+# 3. Nunca subas el archivo .env a control de versiones
+# 4. Para Snowflake, asegúrate de que tu warehouse esté activo
+# 5. Para ElevenLabs, puedes usar la cuenta gratuita inicialmente
+
+# ===========================================
+# EJEMPLO DE CONFIGURACIÓN COMPLETA
+# ===========================================
+# SNOWFLAKE_ACCOUNT=abc12345.us-east-1
+# SNOWFLAKE_USER=mi_usuario
+# SNOWFLAKE_PASSWORD=MiContraseña123!
+# SNOWFLAKE_DATABASE=PRODUCTION_DB
+# SNOWFLAKE_SCHEMA=PUBLIC
+# SNOWFLAKE_WAREHOUSE=COMPUTE_WH
+# ELEVENLABS_API_KEY=sk_1234567890abcdef
+# ELEVENLABS_VOICE_ID=pNInz6obpgDQGcFmaJgB

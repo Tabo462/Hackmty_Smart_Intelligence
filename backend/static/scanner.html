@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scanner - Códigos de Barras EAN-13</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .header {
+            background: #1e3a8a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .scanner-section {
+            padding: 30px;
+        }
+
+        .camera-container {
+            position: relative;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        #scanner-container {
+            width: 100%;
+            height: 300px;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 100px;
+            border: 2px solid #1e3a8a;
+            border-radius: 6px;
+            background: rgba(30, 58, 138, 0.05);
+            z-index: 10;
+        }
+
+        .scanner-overlay::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid #1e3a8a;
+            border-radius: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-success {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .status.scanning {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .status.detected {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-section h3 {
+            margin-bottom: 20px;
+            color: #1e3a8a;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+        }
+
+        .form-group input[readonly] {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .scanner-section {
+                padding: 20px;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1e3a8a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .audio-player {
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Web Scanner</h1>
+            <p>Escanea códigos de barras EAN-13 en tiempo real</p>
+        </div>
+
+        <div class="scanner-section">
+            <div class="controls">
+                <button id="startBtn" class="btn btn-primary">Iniciar Escáner</button>
+                <button id="stopBtn" class="btn btn-danger" disabled>Detener</button>
+                <button id="clearBtn" class="btn btn-secondary">Limpiar</button>
+            </div>
+
+            <div id="status" class="status" style="display: none;"></div>
+
+            <div class="camera-container">
+                <div id="scanner-container">
+                    <div class="scanner-overlay"></div>
+                </div>
+            </div>
+
+            <div class="form-section" id="productForm">
+                <h3>Información del Producto</h3>
+                <form id="productFormElement">
+                    <div class="form-group">
+                        <label for="barcode">Código de Barras:</label>
+                        <input type="text" id="barcode" name="barcode" readonly>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productID">ID del Producto:</label>
+                            <input type="text" id="productID" name="productID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productName">Nombre del Producto:</label>
+                            <input type="text" id="productName" name="productName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity">Cantidad:</label>
+                            <input type="number" id="quantity" name="quantity" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lot">Lote:</label>
+                            <input type="text" id="lot" name="lot" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expirationDate">Fecha de Vencimiento:</label>
+                        <input type="date" id="expirationDate" name="expirationDate" required>
+                    </div>
+
+                    <div class="audio-player" id="audioPlayer" style="display: none;">
+                        <audio id="audioElement" controls></audio>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-full">
+                        Guardar Producto
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- QuaggaJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+    <script>
+        class BarcodeScanner {
+            constructor() {
+                this.isScanning = false;
+                this.currentBarcode = null;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.status = document.getElementById('status');
+                this.scannerContainer = document.getElementById('scanner-container');
+                this.productForm = document.getElementById('productForm');
+                this.productFormElement = document.getElementById('productFormElement');
+                this.audioPlayer = document.getElementById('audioPlayer');
+                this.audioElement = document.getElementById('audioElement');
+            }
+
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startScanner());
+                this.stopBtn.addEventListener('click', () => this.stopScanner());
+                this.clearBtn.addEventListener('click', () => this.clearForm());
+                this.productFormElement.addEventListener('submit', (e) => this.saveProduct(e));
+            }
+
+            async startScanner() {
+                try {
+                    this.showStatus('Iniciando escáner...', 'scanning');
+                    
+                    // Solicitar acceso a la cámara
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
+                    });
+
+                    this.isScanning = true;
+                    this.startBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: this.scannerContainer,
+                            constraints: {
+                                width: 640,
+                                height: 480,
+                                facingMode: "environment"
+                            }
+                        },
+                        decoder: {
+                            readers: ["ean_13_reader", "ean_8_reader", "code_128_reader"]
+                        },
+                        locate: true,
+                        locator: {
+                            patchSize: "medium",
+                            halfSample: true
+                        }
+                    }, (err) => {
+                        if (err) {
+                            console.error('Error inicializando Quagga:', err);
+                            this.showStatus('Error al acceder a la cámara', 'error');
+                            this.resetButtons();
+                            return;
+                        }
+                        
+                        this.showStatus('Escaneando... Apunta al código de barras', 'scanning');
+                        Quagga.start();
+                    });
+
+                    Quagga.onDetected((data) => {
+                        const code = data.codeResult.code;
+                        this.handleBarcodeDetected(code);
+                    });
+
+                } catch (error) {
+                    console.error('Error accediendo a la cámara:', error);
+                    this.showStatus('Error: No se pudo acceder a la cámara', 'error');
+                    this.resetButtons();
+                }
+            }
+
+            stopScanner() {
+                if (this.isScanning) {
+                    Quagga.stop();
+                    this.isScanning = false;
+                    this.resetButtons();
+                    this.showStatus('Escáner detenido', '');
+                }
+            }
+
+            resetButtons() {
+                this.startBtn.disabled = false;
+                this.stopBtn.disabled = true;
+            }
+
+            async handleBarcodeDetected(barcode) {
+                if (this.currentBarcode === barcode) return; // Evitar duplicados
+                
+                this.currentBarcode = barcode;
+                this.showStatus(`Código detectado: ${barcode}`, 'detected');
+                
+                // Detener el escáner temporalmente
+                Quagga.stop();
+                this.isScanning = false;
+                this.resetButtons();
+
+                // Verificar en la base de datos
+                await this.checkBarcode(barcode);
+            }
+
+            async checkBarcode(barcode) {
+                try {
+                    this.showStatus('Verificando en base de datos...', 'scanning');
+                    
+                    const response = await fetch('/api/check_barcode', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ barcode: barcode })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.exists) {
+                        // Producto existe - llenar formulario
+                        this.showStatus('Producto encontrado en la base de datos', 'detected');
+                        this.fillForm(data);
+                    } else {
+                        // Producto no existe - reproducir audio
+                        this.showStatus('Producto no encontrado - Nuevo producto', 'error');
+                        this.playAudio(data.audio_base64);
+                        this.showNewProductForm(barcode);
+                    }
+
+                } catch (error) {
+                    console.error('Error verificando barcode:', error);
+                    this.showStatus('Error verificando el código', 'error');
+                }
+            }
+
+            fillForm(data) {
+                document.getElementById('barcode').value = this.currentBarcode;
+                document.getElementById('productID').value = data.productID || '';
+                document.getElementById('productName').value = data.productName || '';
+                document.getElementById('quantity').value = data.quantity || '';
+                document.getElementById('lot').value = data.lot || '';
+                document.getElementById('expirationDate').value = data.expirationDate || '';
+                
+                this.productForm.classList.add('active');
+            }
+
+            showNewProductForm(barcode) {
+                document.getElementById('barcode').value = barcode;
+                document.getElementById('productID').value = '';
+                document.getElementById('productName').value = '';
+                document.getElementById('quantity').value = '';
+                document.getElementById('lot').value = '';
+                document.getElementById('expirationDate').value = '';
+                
+                this.productForm.classList.add('active');
+            }
+
+            playAudio(audioBase64) {
+                if (audioBase64) {
+                    const audioSrc = `data:audio/mpeg;base64,${audioBase64}`;
+                    this.audioElement.src = audioSrc;
+                    this.audioPlayer.style.display = 'block';
+                    
+                    // Reproducir automáticamente
+                    this.audioElement.play().catch(e => {
+                        console.log('No se pudo reproducir automáticamente:', e);
+                    });
+                }
+            }
+
+            async saveProduct(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this.productFormElement);
+                const productData = {
+                    barcode: formData.get('barcode'),
+                    productID: formData.get('productID'),
+                    productName: formData.get('productName'),
+                    quantity: parseInt(formData.get('quantity')),
+                    lot: formData.get('lot'),
+                    expirationDate: formData.get('expirationDate')
+                };
+
+                try {
+                    this.showStatus('Guardando producto...', 'scanning');
+                    
+                    const response = await fetch('/api/save_product', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(productData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showStatus('Producto guardado exitosamente', 'detected');
+                        setTimeout(() => {
+                            this.clearForm();
+                        }, 2000);
+                    } else {
+                        this.showStatus('Error guardando el producto', 'error');
+                    }
+
+                } catch (error) {
+                    console.error('Error guardando producto:', error);
+                    this.showStatus('Error guardando el producto', 'error');
+                }
+            }
+
+            clearForm() {
+                this.productForm.classList.remove('active');
+                this.productFormElement.reset();
+                this.audioPlayer.style.display = 'none';
+                this.currentBarcode = null;
+                this.showStatus('', '');
+            }
+
+            showStatus(message, type) {
+                this.status.textContent = message;
+                this.status.className = `status ${type}`;
+                this.status.style.display = message ? 'block' : 'none';
+            }
+        }
+
+        // Inicializar el escáner cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            new BarcodeScanner();
+        });
+    </script>
+</body>
+</html>
