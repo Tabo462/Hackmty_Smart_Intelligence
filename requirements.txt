@@ -6,3 +6,10 @@ sqlalchemy
 sqlalchemy-utils
 fastapi
 google-genai
+uvicorn
+joblib
+pickle
+os
+pandas
+numpy
+scikit-learn
