@@ -3,15 +3,21 @@ import sys
 # --- Importamos TUS funciones (de tus otros archivos) ---
 # Asumimos que todos están en la misma carpeta
 try:
-    # (El script de Gemini que llamamos 'test.py' o como le hayas puesto)
+    # --- ESTA ES LA CORRECCIÓN ---
+    # Simplemente importa desde el nombre del archivo,
+    # ya que están en la misma carpeta
     from ia_gemini import generar_texto_gemini 
     from ia_audio import generar_audio_elevenlabs
     from ia_snowflake import obtener_datos_viaje
+    # ----------------------------
 except ImportError as e:
     print(f"🚨 ERROR FATAL: No se pudo importar un módulo.")
-    print("Revisa que 'test.py', 'ia_audio.py', y 'ia_snowflake.py' estén en la misma carpeta que este script.")
+    print("Revisa que 'ia_gemini.py', 'ia_audio.py', y 'ia_snowflake.py' estén en la misma carpeta.")
     print(f"Error específico: {e}")
     sys.exit(1)
+
+# ... (El resto de tu código de 'procesar_pregunta_completa' 
+# se queda exactamente igual) ...
 
 def procesar_pregunta_completa(pregunta_usuario):
     """
