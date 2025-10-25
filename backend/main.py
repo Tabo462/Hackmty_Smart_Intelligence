@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 import logging
 import os
+import json
 
 # Importar nuestros managers
 from snowflake_manager import snowflake_manager
@@ -55,6 +56,13 @@ class SaveResponse(BaseModel):
     success: bool
     message: str
 
+class PredictRequest(BaseModel):
+    origin: str
+    flight_type: str
+    service_type: str
+    passenger_count: int
+    product_name: list
+    unit_cost: list
 # Endpoints
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
@@ -181,6 +189,38 @@ async def shutdown_event():
     """Limpieza al cerrar la aplicación"""
     logger.info("🛑 Cerrando Web Scanner API")
     snowflake_manager.disconnect()
+
+@app.post("/api/predict")
+async def predict_consumption(data: PredictRequest):
+    """
+    Endpoint para predecir el consumo utilizando el modelo de Random Forest
+    """
+    try:
+        from aidata.Random_Forest_Regression import AirlineConsumptionPredictor
+
+        # Cargar el modelo entrenado
+        predictor = AirlineConsumptionPredictor.load_trained_model("airline_consumption_model")
+        if predictor is None:
+            raise HTTPException(status_code=500, detail="Modelo no cargado. Asegúrese de entrenar y guardar el modelo primero.")
+
+        # Realizar la predicción
+        prediction = predictor.predict_consumption(
+            origin=data.origin,
+            flight_type=data.flight_type,
+            service_type=data.service_type,
+            passenger_count=data.passenger_count,
+            product_name=data.product_name[0],
+            unit_cost=data.unit_cost[0],
+            has_issues=0
+        )
+
+        print(f"✅ Predicción exitosa! Consumo estimado: {prediction:.2f} unidades")
+
+        return {"predicted_consumption": prediction}
+
+    except Exception as e:
+        logger.error(f"❌ Error en predict_consumption: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
