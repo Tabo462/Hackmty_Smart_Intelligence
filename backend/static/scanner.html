@@ -310,6 +310,15 @@
                 <button id="startBtn" class="btn btn-primary">Iniciar Escáner</button>
                 <button id="stopBtn" class="btn btn-danger" disabled>Detener</button>
                 <button id="clearBtn" class="btn btn-secondary">Limpiar</button>
+                <button id="manualBtn" class="btn btn-secondary">Entrada Manual</button>
+            </div>
+
+            <div id="manualInput" class="form-group" style="display: none;">
+                <label for="manualBarcode">Ingresar código de barras manualmente:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="manualBarcode" placeholder="1234567890123" style="flex: 1;">
+                    <button id="processManualBtn" class="btn btn-primary">Procesar</button>
+                </div>
             </div>
 
             <div id="status" class="status" style="display: none;"></div>
@@ -367,8 +376,14 @@
         </div>
     </div>
 
-    <!-- QuaggaJS -->
+    <!-- QuaggaJS - Versión más estable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+        // Fix para problemas de Web Workers con QuaggaJS
+        if (typeof window !== 'undefined') {
+            window.Quagga = window.Quagga || {};
+        }
+    </script>
 
     <script>
         class BarcodeScanner {
@@ -383,6 +398,10 @@
                 this.startBtn = document.getElementById('startBtn');
                 this.stopBtn = document.getElementById('stopBtn');
                 this.clearBtn = document.getElementById('clearBtn');
+                this.manualBtn = document.getElementById('manualBtn');
+                this.manualInput = document.getElementById('manualInput');
+                this.manualBarcode = document.getElementById('manualBarcode');
+                this.processManualBtn = document.getElementById('processManualBtn');
                 this.status = document.getElementById('status');
                 this.scannerContainer = document.getElementById('scanner-container');
                 this.productForm = document.getElementById('productForm');
@@ -395,12 +414,26 @@
                 this.startBtn.addEventListener('click', () => this.startScanner());
                 this.stopBtn.addEventListener('click', () => this.stopScanner());
                 this.clearBtn.addEventListener('click', () => this.clearForm());
+                this.manualBtn.addEventListener('click', () => this.toggleManualInput());
+                this.processManualBtn.addEventListener('click', () => this.processManualBarcode());
                 this.productFormElement.addEventListener('submit', (e) => this.saveProduct(e));
+                
+                // Enter key para entrada manual
+                this.manualBarcode.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.processManualBarcode();
+                    }
+                });
             }
 
             async startScanner() {
                 try {
                     this.showStatus('Iniciando escáner...', 'scanning');
+                    
+                    // Verificar si QuaggaJS está disponible
+                    if (typeof Quagga === 'undefined') {
+                        throw new Error('QuaggaJS no está disponible');
+                    }
                     
                     // Solicitar acceso a la cámara
                     const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -427,12 +460,32 @@
                             }
                         },
                         decoder: {
-                            readers: ["ean_13_reader", "ean_8_reader", "code_128_reader"]
+                            readers: ["ean_13_reader", "ean_8_reader", "code_128_reader"],
+                            debug: {
+                                showCanvas: false,
+                                showPatches: false,
+                                showFoundPatches: false,
+                                showSkeleton: false,
+                                showLabels: false,
+                                showPatchLabels: false,
+                                showBoundingBox: false,
+                                showBoundingBoxes: false,
+                                showScanningRegion: false,
+                                showTransformedRegion: false
+                            }
                         },
                         locate: true,
                         locator: {
                             patchSize: "medium",
                             halfSample: true
+                        },
+                        numOfWorkers: 0, // Deshabilitar Web Workers para evitar errores
+                        frequency: 10, // Reducir frecuencia de escaneo
+                        area: { // Definir área de escaneo
+                            top: "20%",
+                            right: "20%",
+                            left: "20%",
+                            bottom: "20%"
                         }
                     }, (err) => {
                         if (err) {
@@ -453,8 +506,13 @@
 
                 } catch (error) {
                     console.error('Error accediendo a la cámara:', error);
-                    this.showStatus('Error: No se pudo acceder a la cámara', 'error');
+                    this.showStatus('Error: No se pudo acceder a la cámara. Usa entrada manual.', 'error');
                     this.resetButtons();
+                    
+                    // Mostrar sugerencia de entrada manual
+                    setTimeout(() => {
+                        this.showStatus('Usa el botón "Entrada Manual" para ingresar códigos manualmente', 'scanning');
+                    }, 3000);
                 }
             }
 
@@ -606,6 +664,41 @@
                 this.status.textContent = message;
                 this.status.className = `status ${type}`;
                 this.status.style.display = message ? 'block' : 'none';
+            }
+
+            toggleManualInput() {
+                const isVisible = this.manualInput.style.display !== 'none';
+                this.manualInput.style.display = isVisible ? 'none' : 'block';
+                this.manualBtn.textContent = isVisible ? 'Entrada Manual' : 'Ocultar Manual';
+                
+                if (!isVisible) {
+                    this.manualBarcode.focus();
+                }
+            }
+
+            async processManualBarcode() {
+                const barcode = this.manualBarcode.value.trim();
+                
+                if (!barcode) {
+                    this.showStatus('Por favor ingresa un código de barras', 'error');
+                    return;
+                }
+                
+                if (barcode.length < 8) {
+                    this.showStatus('El código de barras debe tener al menos 8 dígitos', 'error');
+                    return;
+                }
+                
+                this.showStatus(`Procesando código: ${barcode}`, 'detected');
+                this.currentBarcode = barcode;
+                
+                // Ocultar entrada manual
+                this.manualInput.style.display = 'none';
+                this.manualBtn.textContent = 'Entrada Manual';
+                this.manualBarcode.value = '';
+                
+                // Verificar en la base de datos
+                await this.checkBarcode(barcode);
             }
         }
 
