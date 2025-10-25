@@ -112,6 +112,7 @@
          <div class="controls">
              <button id="startBtn" class="start-btn">Start Scanner</button>
              <button id="stopBtn" class="stop-btn" disabled>Stop Scanner</button>
+             <button id="cameraBtn" class="camera-btn" style="background: #FF9800; color: white;">Select Camera</button>
              <button id="historyBtn" class="history-btn" style="background: #2196F3; color: white;">Show History</button>
          </div>
         
@@ -133,16 +134,30 @@
          </div>
      </div>
 
+     <!-- Camera Selection Modal -->
+     <div id="cameraModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 90%;">
+             <h3 style="margin-top: 0;">Select Camera</h3>
+             <div id="cameraList"></div>
+             <div style="margin-top: 20px; text-align: right;">
+                 <button id="cancelCamera" style="background: #f44336; color: white; padding: 8px 16px; border: none; border-radius: 5px; margin-right: 10px;">Cancel</button>
+             </div>
+         </div>
+     </div>
+
     <!-- Include QuaggaJS script -->
     <script src="https://cdn.rawgit.com/serratus/quaggaJS/0420d5e0/dist/quagga.min.js"></script>
     
     <script>
         // Global variables
         let isScanning = false;
+        let availableCameras = [];
+        let selectedCameraId = null;
         
          // DOM elements
          const startBtn = document.getElementById('startBtn');
          const stopBtn = document.getElementById('stopBtn');
+         const cameraBtn = document.getElementById('cameraBtn');
          const historyBtn = document.getElementById('historyBtn');
          const status = document.getElementById('status');
          const result = document.getElementById('result');
@@ -151,11 +166,16 @@
          const barcodeResult = document.getElementById('barcodeResult');
          const errorMessage = document.getElementById('errorMessage');
          const historyContent = document.getElementById('historyContent');
+         const cameraModal = document.getElementById('cameraModal');
+         const cameraList = document.getElementById('cameraList');
+         const cancelCamera = document.getElementById('cancelCamera');
          
          // Event listeners
          startBtn.addEventListener('click', startScanner);
          stopBtn.addEventListener('click', stopScanner);
+         cameraBtn.addEventListener('click', showCameraSelection);
          historyBtn.addEventListener('click', toggleHistory);
+         cancelCamera.addEventListener('click', hideCameraModal);
         
         function updateStatus(message, type) {
             status.textContent = message;
@@ -207,6 +227,60 @@
              history.style.display = 'none';
              historyBtn.textContent = 'Show History';
          }
+         
+         async function showCameraSelection() {
+             try {
+                 updateStatus('Loading cameras...', 'scanning');
+                 
+                 // Get available cameras
+                 const devices = await navigator.mediaDevices.enumerateDevices();
+                 availableCameras = devices.filter(device => device.kind === 'videoinput');
+                 
+                 if (availableCameras.length === 0) {
+                     showError('No cameras found');
+                     updateStatus('Error: No cameras available', 'error');
+                     return;
+                 }
+                 
+                 // Build camera list
+                 let html = '';
+                 availableCameras.forEach((camera, index) => {
+                     const label = camera.label || `Camera ${index + 1}`;
+                     const isSelected = selectedCameraId === camera.deviceId ? 'checked' : '';
+                     html += `
+                         <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                             <input type="radio" name="camera" value="${camera.deviceId}" id="camera_${index}" ${isSelected}>
+                             <label for="camera_${index}" style="margin-left: 10px; cursor: pointer;">${label}</label>
+                         </div>
+                     `;
+                 });
+                 
+                 cameraList.innerHTML = html;
+                 
+                 // Add event listeners to radio buttons
+                 const radioButtons = cameraList.querySelectorAll('input[name="camera"]');
+                 radioButtons.forEach(radio => {
+                     radio.addEventListener('change', function() {
+                         selectedCameraId = this.value;
+                         console.log('Selected camera:', this.value);
+                         hideCameraModal();
+                         updateStatus(`Camera selected: ${this.nextElementSibling.textContent}`, 'stopped');
+                     });
+                 });
+                 
+                 cameraModal.style.display = 'block';
+                 updateStatus('Select a camera from the list', 'stopped');
+                 
+             } catch (error) {
+                 console.error('Error getting cameras:', error);
+                 showError(`Error accessing cameras: ${error.message}`);
+                 updateStatus('Error: Cannot access cameras', 'error');
+             }
+         }
+         
+         function hideCameraModal() {
+             cameraModal.style.display = 'none';
+         }
         
          // Variables para estabilizar el reconocimiento
          let lastDetectedCode = '';
@@ -239,16 +313,25 @@
                  return;
              }
              
+             // Build constraints with selected camera
+             const constraints = {
+                 width: 1280,  // Mayor resolución para mejor detección
+                 height: 720,
+                 facingMode: "environment"
+             };
+             
+             // Add deviceId if a specific camera is selected
+             if (selectedCameraId) {
+                 constraints.deviceId = { exact: selectedCameraId };
+                 console.log('Using selected camera:', selectedCameraId);
+             }
+             
              const config = {
                  inputStream: {
                      name: "Live",
                      type: "LiveStream",
                      target: document.querySelector('#scanner-container'),
-                     constraints: {
-                         width: 1280,  // Mayor resolución para mejor detección
-                         height: 720,
-                         facingMode: "environment"
-                     },
+                     constraints: constraints,
                      area: { // Área de escaneo más específica
                          top: "15%",
                          right: "15%",
@@ -380,8 +463,46 @@
             }
         });
         
-        // Initial status
-        updateStatus('Ready to start scanning', 'stopped');
+         // Initialize default camera on page load
+         async function initializeDefaultCamera() {
+             try {
+                 const devices = await navigator.mediaDevices.enumerateDevices();
+                 const cameras = devices.filter(device => device.kind === 'videoinput');
+                 
+                 if (cameras.length > 0) {
+                     // Try to find rear camera first (environment facing)
+                     const rearCamera = cameras.find(camera => 
+                         camera.label.toLowerCase().includes('rear') || 
+                         camera.label.toLowerCase().includes('back') ||
+                         camera.label.toLowerCase().includes('environment')
+                     );
+                     
+                     if (rearCamera) {
+                         selectedCameraId = rearCamera.deviceId;
+                         console.log('Auto-selected rear camera:', rearCamera.label);
+                         updateStatus(`Auto-selected: ${rearCamera.label}`, 'stopped');
+                     } else {
+                         // Fallback to first camera
+                         selectedCameraId = cameras[0].deviceId;
+                         console.log('Auto-selected first camera:', cameras[0].label);
+                         updateStatus(`Auto-selected: ${cameras[0].label}`, 'stopped');
+                     }
+                 } else {
+                     updateStatus('No cameras found - Click "Select Camera"', 'stopped');
+                 }
+             } catch (error) {
+                 console.error('Error initializing camera:', error);
+                 updateStatus('Error accessing cameras', 'error');
+             }
+         }
+         
+         // Initialize on page load
+         document.addEventListener('DOMContentLoaded', function() {
+             initializeDefaultCamera();
+         });
+         
+         // Initial status
+         updateStatus('Loading cameras...', 'stopped');
     </script>
 </body>
 </html>
