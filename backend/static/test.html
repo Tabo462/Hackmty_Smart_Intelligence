@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>QuaggaJS Barcode Scanner - Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        /* Basic styling for the scanner container */
+        #scanner-container {
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            margin: 0 auto;
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        canvas.drawing, canvas.drawingBuffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .start-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .error {
+            background: #ffe8e8;
+            border-left-color: #f44336;
+        }
+        
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .status.scanning {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.stopped {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 QuaggaJS Barcode Scanner - Test</h1>
+        
+         <div class="controls">
+             <button id="startBtn" class="start-btn">Start Scanner</button>
+             <button id="stopBtn" class="stop-btn" disabled>Stop Scanner</button>
+             <button id="historyBtn" class="history-btn" style="background: #2196F3; color: white;">Show History</button>
+         </div>
+        
+        <div id="status" class="status stopped">Scanner stopped</div>
+        
+        <div id="scanner-container"></div>
+        
+        <div id="result" class="result" style="display: none;">
+            <strong>Detected Barcode:</strong> <span id="barcodeResult"></span>
+        </div>
+        
+         <div id="error" class="result error" style="display: none;">
+             <strong>Error:</strong> <span id="errorMessage"></span>
+         </div>
+         
+         <div id="history" class="result" style="display: none; background: #f0f8ff;">
+             <strong>Detection History:</strong>
+             <div id="historyContent"></div>
+         </div>
+     </div>
+
+    <!-- Include QuaggaJS script -->
+    <script src="https://cdn.rawgit.com/serratus/quaggaJS/0420d5e0/dist/quagga.min.js"></script>
+    
+    <script>
+        // Global variables
+        let isScanning = false;
+        
+         // DOM elements
+         const startBtn = document.getElementById('startBtn');
+         const stopBtn = document.getElementById('stopBtn');
+         const historyBtn = document.getElementById('historyBtn');
+         const status = document.getElementById('status');
+         const result = document.getElementById('result');
+         const error = document.getElementById('error');
+         const history = document.getElementById('history');
+         const barcodeResult = document.getElementById('barcodeResult');
+         const errorMessage = document.getElementById('errorMessage');
+         const historyContent = document.getElementById('historyContent');
+         
+         // Event listeners
+         startBtn.addEventListener('click', startScanner);
+         stopBtn.addEventListener('click', stopScanner);
+         historyBtn.addEventListener('click', toggleHistory);
+        
+        function updateStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        function showResult(code) {
+            barcodeResult.textContent = code;
+            result.style.display = 'block';
+            error.style.display = 'none';
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            error.style.display = 'block';
+            result.style.display = 'none';
+        }
+        
+         function hideMessages() {
+             result.style.display = 'none';
+             error.style.display = 'none';
+         }
+         
+         function toggleHistory() {
+             if (history.style.display === 'none') {
+                 showHistory();
+             } else {
+                 hideHistory();
+             }
+         }
+         
+         function showHistory() {
+             if (detectionHistory.length === 0) {
+                 historyContent.innerHTML = '<p>No detections yet</p>';
+             } else {
+                 let html = '<ul>';
+                 detectionHistory.forEach((item, index) => {
+                     const time = new Date(item.timestamp).toLocaleTimeString();
+                     html += `<li><strong>${item.code}</strong> - Confidence: ${(item.confidence * 100).toFixed(1)}% - ${time}</li>`;
+                 });
+                 html += '</ul>';
+                 historyContent.innerHTML = html;
+             }
+             history.style.display = 'block';
+             historyBtn.textContent = 'Hide History';
+         }
+         
+         function hideHistory() {
+             history.style.display = 'none';
+             historyBtn.textContent = 'Show History';
+         }
+        
+         // Variables para estabilizar el reconocimiento
+         let lastDetectedCode = '';
+         let detectionCount = 0;
+         let detectionHistory = [];
+         const REQUIRED_CONSISTENT_DETECTIONS = 3; // Requerir 3 detecciones consistentes
+         const DETECTION_TIMEOUT = 2000; // 2 segundos para resetear
+         
+         function startScanner() {
+             console.log('Starting QuaggaJS scanner...');
+             updateStatus('Initializing scanner...', 'scanning');
+             hideMessages();
+             
+             // Reset detection variables
+             lastDetectedCode = '';
+             detectionCount = 0;
+             detectionHistory = [];
+             
+             // Check if QuaggaJS is available
+             if (typeof Quagga === 'undefined') {
+                 showError('QuaggaJS library not loaded');
+                 updateStatus('Error: QuaggaJS not available', 'error');
+                 return;
+             }
+             
+             // Check camera support
+             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                 showError('Camera API not supported in this browser');
+                 updateStatus('Error: Camera not supported', 'error');
+                 return;
+             }
+             
+             const config = {
+                 inputStream: {
+                     name: "Live",
+                     type: "LiveStream",
+                     target: document.querySelector('#scanner-container'),
+                     constraints: {
+                         width: 1280,  // Mayor resolución para mejor detección
+                         height: 720,
+                         facingMode: "environment"
+                     },
+                     area: { // Área de escaneo más específica
+                         top: "15%",
+                         right: "15%",
+                         left: "15%",
+                         bottom: "15%"
+                     }
+                 },
+                 decoder: {
+                     readers: ["ean_reader"],
+                     debug: {
+                         drawBoundingBox: false,
+                         showFrequency: false,
+                         drawScanline: false,
+                         showPattern: false
+                     }
+                 },
+                 locate: true,
+                 locator: {
+                     halfSample: true,
+                     patchSize: "large", // Patch más grande para mejor detección
+                     showCanvas: false,
+                     showPatches: false,
+                     showFoundPatches: false,
+                     showSkeleton: false,
+                     showLabels: false,
+                     showPatchLabels: false,
+                     showBoundingBox: false,
+                     showScanningRegion: false
+                 },
+                 frequency: 5 // Reducir frecuencia para mejor estabilidad
+             };
+             
+             console.log('QuaggaJS config:', config);
+             
+             Quagga.init(config, function(err) {
+                 if (err) {
+                     console.error('QuaggaJS initialization error:', err);
+                     showError(`Initialization failed: ${err.message || err}`);
+                     updateStatus('Error: Initialization failed', 'error');
+                     return;
+                 }
+                 
+                 console.log("QuaggaJS initialized successfully.");
+                 updateStatus('Scanner running - Point camera at barcode', 'scanning');
+                 
+                 // Start scanning
+                 Quagga.start();
+                 isScanning = true;
+                 
+                 // Update buttons
+                 startBtn.disabled = true;
+                 stopBtn.disabled = false;
+             });
+             
+             // Handle barcode detection with stabilization
+             Quagga.onDetected(function(result) {
+                 const code = result.codeResult.code;
+                 const confidence = result.codeResult.decodedCodes ? 
+                     result.codeResult.decodedCodes.reduce((acc, curr) => acc + (1 - curr.error), 0) / result.codeResult.decodedCodes.length : 0;
+                 
+                 console.log("Barcode detected:", code, "Confidence:", confidence);
+                 
+                 // Solo procesar códigos con buena confianza
+                 if (confidence < 0.7) {
+                     console.log("Low confidence detection, ignoring:", code);
+                     return;
+                 }
+                 
+                 // Verificar si es el mismo código que antes
+                 if (code === lastDetectedCode) {
+                     detectionCount++;
+                     console.log(`Same code detected ${detectionCount} times:`, code);
+                     
+                     // Si hemos detectado el mismo código varias veces, mostrarlo
+                     if (detectionCount >= REQUIRED_CONSISTENT_DETECTIONS) {
+                         showResult(code);
+                         updateStatus(`Barcode confirmed: ${code}`, 'scanning');
+                         
+                         // Opcional: parar después de confirmación
+                         // stopScanner();
+                     }
+                 } else {
+                     // Nuevo código detectado
+                     lastDetectedCode = code;
+                     detectionCount = 1;
+                     console.log("New code detected:", code);
+                     
+                     // Agregar a historial para análisis
+                     detectionHistory.push({
+                         code: code,
+                         timestamp: Date.now(),
+                         confidence: confidence
+                     });
+                     
+                     // Mantener solo los últimos 10
+                     if (detectionHistory.length > 10) {
+                         detectionHistory.shift();
+                     }
+                 }
+                 
+                 // Resetear contador después de un tiempo
+                 setTimeout(() => {
+                     if (detectionCount > 0) {
+                         detectionCount = 0;
+                         lastDetectedCode = '';
+                     }
+                 }, DETECTION_TIMEOUT);
+             });
+         }
+        
+        function stopScanner() {
+            if (isScanning) {
+                console.log('Stopping QuaggaJS scanner...');
+                Quagga.stop();
+                isScanning = false;
+                
+                updateStatus('Scanner stopped', 'stopped');
+                
+                // Update buttons
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (isScanning) {
+                Quagga.stop();
+            }
+        });
+        
+        // Initial status
+        updateStatus('Ready to start scanning', 'stopped');
+    </script>
+</body>
+</html>
