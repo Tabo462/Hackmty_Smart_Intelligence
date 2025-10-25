@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Página básica - Ejemplo</title>
+  <meta name="description" content="Una página HTML básica de ejemplo creada para Carlos.">
+  <style>
+    :root{--bg:#f7f7fb;--card:#ffffff;--accent:#0b63ff;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; margin:0; background:var(--bg); color:#111}
+    .container{max-width:900px;margin:32px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px}
+    header h1{margin:0;font-size:1.5rem}
+    nav{margin-left:auto}
+    nav a{margin-left:12px;text-decoration:none;color:var(--accent)}
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(16,24,40,0.06);margin-top:18px}
+    footer{margin-top:22px;text-align:center;color:var(--muted);font-size:0.9rem}
+    form label{display:block;font-weight:600;margin-top:10px}
+    input[type="text"], input[type="email"], textarea{width:100%;padding:10px;margin-top:6px;border:1px solid #e6e9ef;border-radius:8px}
+    button{margin-top:12px;background:var(--accent);color:white;padding:10px 14px;border:0;border-radius:8px;cursor:pointer}
+    .preview{margin-top:12px;padding:12px;border-radius:8px;background:#f3f6ff;color:#062c9b}
+    @media (max-width:600px){header{flex-direction:column;align-items:flex-start}nav{margin-left:0}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' rx='8' fill='%230b63ff'/><text x='50%' y='55%' font-size='22' text-anchor='middle' fill='white' font-family='Arial' dy='.3em'>C</text></svg>" alt="logo" width="48" height="48">
+      <h1>Página básica — Ejemplo</h1>
+      <nav>
+        <a href="#about">Acerca</a>
+        <a href="#features">Características</a>
+        <a href="#contact">Contacto</a>
+      </nav>
+    </header>
+
+    <section id="about" class="card">
+      <h2>Acerca de esta página</h2>
+      <p>Esta es una plantilla HTML mínima pensada para aprendizaje: estructura semántica, CSS simple y un pequeño formulario con validación en el cliente.</p>
+    </section>
+
+    <section id="features" class="card">
+      <h2>Características</h2>
+      <ul>
+        <li>Estructura semántica (header, nav, main, footer).</li>
+        <li>Formulario de contacto con validación básica y sanitización antes de mostrar.</li>
+        <li>Estilos responsivos sin dependencias externas.</li>
+      </ul>
+    </section>
+
+    <section id="contact" class="card">
+      <h2>Contacto / Demo</h2>
+      <form id="contactForm" onsubmit="return handleSubmit(event)">
+        <label for="name">Nombre</label>
+        <input id="name" name="name" type="text" required minlength="2" maxlength="60">
+
+        <label for="email">Correo</label>
+        <input id="email" name="email" type="email" required>
+
+        <label for="message">Mensaje</label>
+        <textarea id="message" name="message" rows="4" required maxlength="500"></textarea>
+
+        <button type="submit">Enviar (demo)</button>
+      </form>
+
+      <div id="result" aria-live="polite"></div>
+    </section>
+
+    <footer>
+      <small>Plantilla creada para aprendizaje — actúa como punto de partida.</small>
+    </footer>
+  </div>
+
+  <script>
+    // Pequeña función de sanitización para evitar inyecciones al mostrar contenido en la página.
+    function sanitize(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
+    function handleSubmit(e){
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      // Validación simple adicional
+      if(name.length < 2){ alert('Nombre demasiado corto'); return false }
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('Correo inválido'); return false }
+
+      // Mostrar resultado sanitizado (sin enviar a servidor en esta demo)
+      const out = document.getElementById('result');
+      out.innerHTML = `\n        <div class="preview">\n          <strong>Nombre:</strong> ${sanitize(name)}<br>\n          <strong>Correo:</strong> ${sanitize(email)}<br>\n          <strong>Mensaje:</strong> ${sanitize(message)}\n        </div>`;
+
+      return false;
+    }
+
+    // Buenas prácticas recomendadas (comentario visible en el código):
+    // - En producción, enviar datos por HTTPS a un backend que implemente su propia sanitización y protección CSRF.
+    // - Añadir Content-Security-Policy desde el servidor para mitigar XSS.
+    // - No confiar en la validación del cliente: validarla siempre en el servidor.
+  </script>
+</body>
+</html>
