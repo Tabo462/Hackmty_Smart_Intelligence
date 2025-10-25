@@ -1,0 +1,8 @@
+elevenlabs
+python-dotenv
+snowflake-connector-python
+snowflake-sqlalchemy
+sqlalchemy
+sqlalchemy-utils
+fastapi
+google-genai
