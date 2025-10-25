@@ -1,1 +1,0 @@
-# OpenPlate Backend Package
