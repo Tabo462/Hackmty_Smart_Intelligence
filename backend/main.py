@@ -56,7 +56,7 @@ from elevenlabs_manager import elevenlabs_manager
 # Ensure Python can import the module located in backend/snowflake
 sys.path.append(os.path.join(os.path.dirname(__file__), 'snowflake'))
 try:
-    from ia_gemini import generar_texto_gemini, modelo_gemini as ia_modelo_gemini
+    from snowflake.ia_gemini import generar_texto_gemini, modelo_gemini as ia_modelo_gemini
     logger.info("Imported generar_texto_gemini from ia_gemini.py")
 except Exception as e:
     logger.warning(f"Could not import ia_gemini module: {e}")
