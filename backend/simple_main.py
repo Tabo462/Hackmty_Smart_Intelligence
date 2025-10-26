@@ -288,43 +288,31 @@ async def check_barcode(request: BarcodeRequest):
 @app.post("/api/save_product", response_model=SaveResponse)
 async def save_product(request: ProductRequest):
     """
-    Guarda o actualiza un producto en la base de datos
+    Guarda un nuevo producto en la base de datos.
+    Permite agregar múltiples registros con el mismo barcode pero diferente lote, cantidad y fecha de expiración.
     """
     try:
         logger.info(f"💾 Guardando producto: {request.barcode}")
         
-        result = sf.check_barcode_exists(request.barcode.strip())
-
-        if result["exists"]:
-            logger.info("⚠️ El producto ya existe. Actualizando información.")
-            if sf.update_existing_product(barcode=request.barcode.strip(), product_id=request.productID, product_name=request.productName, quantity=request.quantity, lot_number=request.lot, exp_date=request.expirationDate)["success"]:
-                logger.info("✅ Producto actualizado correctamente.")
-                return SaveResponse(
-                    success=True,
-                    message="Producto guardado exitosamente"
-                )
-            else:
-                logger.error("❌ Error actualizando el producto existente.")
-                raise HTTPException(status_code=500, detail="Error actualizando el producto existente")
+        # Always insert as new record - allow multiple entries with same barcode but different lot/quantity/exp_date
+        logger.info("🆕 Insertando nuevo registro (permite múltiples entradas con mismo barcode).")
+        single_product_dict = {
+            'barcode': request.barcode.strip(),
+            'product_id': request.productID,
+            'product_name': request.productName,
+            'lot_number': request.lot,
+            'quantity': request.quantity,
+            'exp_date': request.expirationDate
+        }
+        if sf.add_product_data(single_product_dict):
+            logger.info("✅ Producto insertado correctamente.")
+            return SaveResponse(
+                success=True,
+                message="Producto guardado exitosamente"
+            )
         else:
-            logger.info("🆕 Producto nuevo. Insertando en la base de datos.")
-            single_product_dict = {
-                'barcode': request.barcode.strip(),
-                'product_id': request.productID,
-                'product_name': request.productName,
-                'lot_number': request.lot,
-                'quantity': request.quantity,
-                'exp_date': request.expirationDate
-            }
-            if sf.add_product_data(single_product_dict):
-                logger.info("✅ Producto insertado correctamente.")
-                return SaveResponse(
-                    success=True,
-                    message="Producto guardado exitosamente"
-                )
-            else:
-                logger.error("❌ Error insertando el nuevo producto.")
-                raise HTTPException(status_code=500, detail="Error insertando el nuevo producto")            
+            logger.error("❌ Error insertando el nuevo producto.")
+            raise HTTPException(status_code=500, detail="Error insertando el nuevo producto")            
     except Exception as e:
         logger.error(f"❌ Error en save_product: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
