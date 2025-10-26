@@ -217,6 +217,29 @@
          display: none !important;
        }
        
+       /* Navbar brand hover animation */
+       .navbar-brand {
+         transition: all 0.3s ease-in-out;
+       }
+       
+       .navbar-brand:hover {
+         transform: scale(1.05);
+       }
+       
+       .navbar-brand:hover span {
+         text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+       }
+       
+       /* Menu toggle button hover animation */
+       .navbar-toggler {
+         transition: all 0.3s ease-in-out;
+       }
+       
+       .navbar-toggler:hover {
+         transform: scale(1.05);
+         box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+       }
+       
        /* Skeleton Loading Animation */
        @keyframes skeleton-pulse {
          0% {
@@ -435,8 +458,8 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <a class="navbar-brand d-flex align-items-center" href="index.html">
-          <img src="media_files/gategroup_logo.jpg" alt="Gategroup Logo" height="24" class="me-2">
-          <span>Smart Plate</span>
+          <img src="media_files/gategroup_logo.jpg" alt="Gategroup Logo" height="28" class="me-2" style="object-fit: contain;">
+          <span class="fw-bold" style="font-size: 1.25rem; letter-spacing: 0.02em; margin-top: -3px;">Smart Plate</span>
         </a>
       </div>
     </nav>
