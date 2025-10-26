@@ -198,10 +198,10 @@ class ChatMessage(BaseModel):
 class ChatMessageRequest(BaseModel): message: str
 class ChatMessageResponse(BaseModel): reply: str
 
-# Ruta principal - sirve el frontend
-@app.get("/index.html")
-async def serve_frontend():
-    """Servir la página principal del frontend"""
+# Ruta raíz - redirige a index.html
+@app.get("/")
+async def root():
+    """Redirige a index.html"""
     try:
         frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/index.html")
         return FileResponse(frontend_path)
@@ -210,7 +210,21 @@ async def serve_frontend():
         <h1>🚀 Smart Intelligence API</h1>
         <p>Backend funcionando correctamente!</p>
         <p><a href="/docs">Ver documentación de la API</a></p>
-        <p><a href="/predictions">Ir a predicciones</a></p>
+        <p><a href="/index.html">Ir al frontend</a></p>
+        """)
+
+# Ruta principal - sirve el frontend
+@app.get("/index.html")
+async def serve_frontend():
+    """Servir la página principal del frontend"""
+    try:
+        frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/index.html")
+        return FileResponse(frontend_path)
+    except Exception as e:
+        return HTMLResponse(f"""
+        <h1>❌ Error cargando frontend</h1>
+        <p>Error: {str(e)}</p>
+        <p><a href="/docs">Ver documentación de la API</a></p>
         """)
 
 # Servir la página de predicciones
@@ -660,6 +674,7 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     import socket
+    import sys
     
     # Función para obtener la IP local
     def get_local_ip():
@@ -679,27 +694,26 @@ if __name__ == "__main__":
     if not sf.connect():
         print("❌ Failed to connect to Snowflake. Please check your credentials.")
     
-    # Generar certificados SSL
-    cert_file, key_file = generate_self_signed_cert()
-    
-    print("🚀 Iniciando servidor FastAPI con HTTPS...")
+    print("🚀 Iniciando servidor FastAPI...")
     print("\n" + "="*60)
-    print("📍 URLs disponibles:")
+    print("📍 URLs disponibles (HTTP - Local):")
     print("="*60)
-    print(f"📱 Frontend local:  https://localhost:8001/index.html")
-    print(f"📱 Frontend móvil:  https://{local_ip}:8001/index.html")
-    print(f"📦 Exp Adding:      https://{local_ip}:8001/exp_adding.html")
-    print(f"🔮 Predicciones:    https://{local_ip}:8001/pre_flight_predictions.html")
-    print(f"📊 Dashboard:       https://{local_ip}:8001/exp_dashboard.html")
-    print(f"📚 Documentación:   https://{local_ip}:8001/docs")
+    print(f"📱 Frontend local:  http://localhost:8001/")
+    print(f"📦 Exp Adding:      http://localhost:8001/exp_adding.html")
+    print(f"🔮 Predicciones:    http://localhost:8001/pre_flight_predictions.html")
+    print(f"📊 Dashboard:       http://localhost:8001/exp_dashboard.html")
+    print(f"📚 Documentación:   http://localhost:8001/docs")
     print("="*60)
-    print("\n⚠️  IMPORTANTE para acceder desde tu teléfono:")
-    print(f"   1. Asegúrate de que tu teléfono esté en la misma red WiFi")
-    print(f"   2. Ingresa: https://{local_ip}:8001/exp_adding.html")
-    print(f"   3. Acepta la advertencia de certificado (es autofirmado)")
-    print(f"   4. Dale permisos a la cámara cuando lo solicite")
+    print(f"\n📍 URLs disponibles (HTTP - Móvil):")
+    print("="*60)
+    print(f"📱 Frontend móvil:  http://{local_ip}:8001/")
+    print(f"📦 Exp Adding:      http://{local_ip}:8001/exp_adding.html")
+    print("="*60)
+    print(f"\n⚠️  NOTA: Para la cámara en móvil necesitas HTTPS")
+    print(f"   Si necesitas probar la cámara, avísame y configuro HTTPS")
     print("="*60)
     print()
     
-    uvicorn.run(app, host="0.0.0.0", port=8001, ssl_keyfile=key_file, ssl_certfile=cert_file)
+    # Usar HTTP por defecto (sin advertencia de seguridad)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
     
