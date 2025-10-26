@@ -164,6 +164,24 @@
         .history-btn:hover {
             background: #138496;
         }
+
+        .link-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .link-btn:hover {
+            background: #218838;
+        }
+
+        .save-btn {
+            background: #070769;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #0a0a8a;
+        }
         
         .result {
             margin-top: 25px;
@@ -207,6 +225,65 @@
             border: 2px solid #f5c6cb;
         }
         
+        /* Product Form styling */
+        .product-form {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #E1F1F6;
+        }
+
+        .product-form h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #070769;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E1F1F6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #070769;
+        }
+
+        .form-group input[readonly] {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            flex: 1;
+        }
+
         /* Modal styling */
         #cameraModal {
             background: rgba(7, 7, 105, 0.8);
@@ -268,6 +345,19 @@
             h1 {
                 font-size: 24px;
             }
+
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .product-form {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -310,6 +400,47 @@
                 <strong>Detection History:</strong>
                 <div id="historyContent"></div>
             </div>
+
+            <!-- Product Information Form -->
+            <div class="product-form">
+                <h2 style="color: #070769; margin-bottom: 20px;">Product Information</h2>
+                <form id="productForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="barcode">Barcode:</label>
+                            <input type="text" id="barcode" name="barcode" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="productID">ProductID:</label>
+                            <input type="text" id="productID" name="productID" placeholder="Auto-filled if exists">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Product Name:</label>
+                            <input type="text" id="productName" name="productName" placeholder="Auto-filled if exists">
+                        </div>
+                        <div class="form-group">
+                            <label for="lot">Lot#:</label>
+                            <input type="text" id="lot" name="lot" placeholder="Enter lot number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity">Quantity:</label>
+                            <input type="number" id="quantity" name="quantity" min="1" placeholder="Enter quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="expirationDate">Expiration Date:</label>
+                            <input type="date" id="expirationDate" name="expirationDate">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="linkBtn" class="link-btn">Link Barcode</button>
+                        <button type="button" id="saveBtn" class="save-btn">Save Product</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -349,12 +480,24 @@
          const cameraList = document.getElementById('cameraList');
          const cancelCamera = document.getElementById('cancelCamera');
          
+         // Form elements
+         const barcodeInput = document.getElementById('barcode');
+         const productIDInput = document.getElementById('productID');
+         const productNameInput = document.getElementById('productName');
+         const lotInput = document.getElementById('lot');
+         const quantityInput = document.getElementById('quantity');
+         const expirationDateInput = document.getElementById('expirationDate');
+         const linkBtn = document.getElementById('linkBtn');
+         const saveBtn = document.getElementById('saveBtn');
+         
          // Event listeners
          startBtn.addEventListener('click', startScanner);
          stopBtn.addEventListener('click', stopScanner);
          cameraBtn.addEventListener('click', showCameraSelection);
          historyBtn.addEventListener('click', toggleHistory);
          cancelCamera.addEventListener('click', hideCameraModal);
+         linkBtn.addEventListener('click', handleLinkBarcode);
+         saveBtn.addEventListener('click', handleSaveProduct);
         
         function updateStatus(message, type) {
             status.textContent = message;
@@ -365,6 +508,143 @@
             barcodeResult.textContent = code;
             result.style.display = 'block';
             error.style.display = 'none';
+            
+            // Autofill barcode field
+            barcodeInput.value = code;
+            
+            // Check backend for product information
+            checkBarcodeInDatabase(code);
+        }
+
+        async function checkBarcodeInDatabase(barcode) {
+            try {
+                const response = await fetch('/api/check_barcode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ barcode: barcode })
+                });
+                
+                const data = await response.json();
+                
+                if (data.exists) {
+                    // Product exists - autofill ProductID and Product Name
+                    productIDInput.value = data.productID || '';
+                    productNameInput.value = data.productName || '';
+                    
+                    // Optionally fill other fields if they exist
+                    if (data.lot) lotInput.value = data.lot;
+                    if (data.quantity) quantityInput.value = data.quantity;
+                    if (data.expirationDate) expirationDateInput.value = data.expirationDate;
+                    
+                    updateStatus('✅ Product found in database', 'scanning');
+                } else {
+                    // Product doesn't exist
+                    productIDInput.value = '';
+                    productNameInput.value = '';
+                    productIDInput.placeholder = 'No existe';
+                    productNameInput.placeholder = 'No existe';
+                    updateStatus('❌ Product not found in database', 'error');
+                }
+            } catch (error) {
+                console.error('Error checking barcode:', error);
+                updateStatus('Error checking database', 'error');
+            }
+        }
+
+        function handleLinkBarcode() {
+            const barcode = barcodeInput.value;
+            const productID = productIDInput.value;
+            const productName = productNameInput.value;
+            
+            if (!barcode) {
+                alert('Please scan a barcode first');
+                return;
+            }
+            
+            if (!productID || !productName) {
+                alert('Please enter ProductID and Product Name to link');
+                return;
+            }
+            
+            // Clear any "No existe" placeholders
+            productIDInput.placeholder = 'Auto-filled if exists';
+            productNameInput.placeholder = 'Auto-filled if exists';
+            
+            updateStatus('Barcode linked to ProductID and Product Name', 'stopped');
+        }
+
+        async function handleSaveProduct() {
+            const barcode = barcodeInput.value;
+            const productID = productIDInput.value;
+            const productName = productNameInput.value;
+            const lot = lotInput.value;
+            const quantity = parseInt(quantityInput.value) || 0;
+            const expirationDate = expirationDateInput.value;
+            
+            if (!barcode) {
+                alert('Please scan a barcode first');
+                return;
+            }
+            
+            if (!productID || !productName) {
+                alert('Please enter ProductID and Product Name');
+                return;
+            }
+            
+            if (!quantity || quantity <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+            
+            if (!expirationDate) {
+                alert('Please enter an expiration date');
+                return;
+            }
+            
+            try {
+                updateStatus('Saving product...', 'scanning');
+                
+                const response = await fetch('/api/save_product', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        barcode: barcode,
+                        productID: productID,
+                        productName: productName,
+                        quantity: quantity,
+                        lot: lot,
+                        expirationDate: expirationDate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Product saved successfully!');
+                    updateStatus('Product saved successfully', 'stopped');
+                    clearForm();
+                } else {
+                    alert('Error saving product: ' + data.message);
+                    updateStatus('Error saving product', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving product:', error);
+                alert('Error saving product');
+                updateStatus('Error saving product', 'error');
+            }
+        }
+
+        function clearForm() {
+            barcodeInput.value = '';
+            productIDInput.value = '';
+            productNameInput.value = '';
+            lotInput.value = '';
+            quantityInput.value = '';
+            expirationDateInput.value = '';
         }
         
         function showError(message) {
