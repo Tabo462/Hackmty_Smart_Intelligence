@@ -456,11 +456,15 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    
     if not sf.connect():
         print("❌ Failed to connect to Snowflake. Please check your credentials.")
+    
     print("🚀 Iniciando servidor FastAPI...")
     print("📱 Frontend disponible en: http://localhost:8001/index.html")
     print("🔮 Predicciones en: http://localhost:8001/predictions")
     print("📚 Documentación API en: http://localhost:8001/docs")
+    
+    
     uvicorn.run(app, host="0.0.0.0", port=8001)
     
