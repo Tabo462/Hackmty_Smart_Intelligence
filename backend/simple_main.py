@@ -15,9 +15,75 @@ from elevenlabs_manager import elevenlabs_manager
 import google.generativeai as genai 
 import sys
 from pathlib import Path
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from datetime import datetime, timedelta
 
 # Global variable for the Snowflake Connection
 sf = SnowflakeConnection()
+
+def generate_self_signed_cert(cert_file="cert.pem", key_file="key.pem"):
+    """Genera certificados SSL autofirmados si no existen"""
+    cert_path = Path(cert_file)
+    key_path = Path(key_file)
+    
+    if cert_path.exists() and key_path.exists():
+        print("✅ Certificados SSL ya existen")
+        return cert_file, key_file
+    
+    print("🔐 Generando certificados SSL autofirmados...")
+    
+    # Generar clave privada
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    
+    # Crear el certificado
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Smart Intelligence"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+    ])
+    
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        private_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.utcnow()
+    ).not_valid_after(
+        datetime.utcnow() + timedelta(days=365)
+    ).add_extension(
+        x509.SubjectAlternativeName([
+            x509.DNSName("localhost"),
+            x509.DNSName("127.0.0.1"),
+        ]),
+        critical=False,
+    ).sign(private_key, hashes.SHA256())
+    
+    # Guardar certificado
+    cert_path.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    
+    # Guardar clave privada
+    key_path.write_bytes(
+        private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+    )
+    
+    print(f"✅ Certificados generados: {cert_file}, {key_file}")
+    return cert_file, key_file
 
 
 # Global variable for Gemini
@@ -132,10 +198,10 @@ class ChatMessage(BaseModel):
 class ChatMessageRequest(BaseModel): message: str
 class ChatMessageResponse(BaseModel): reply: str
 
-# Ruta principal - sirve el frontend
-@app.get("/index.html")
-async def serve_frontend():
-    """Servir la página principal del frontend"""
+# Ruta raíz - redirige a index.html
+@app.get("/")
+async def root():
+    """Redirige a index.html"""
     try:
         frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/index.html")
         return FileResponse(frontend_path)
@@ -144,7 +210,21 @@ async def serve_frontend():
         <h1>🚀 Smart Intelligence API</h1>
         <p>Backend funcionando correctamente!</p>
         <p><a href="/docs">Ver documentación de la API</a></p>
-        <p><a href="/predictions">Ir a predicciones</a></p>
+        <p><a href="/index.html">Ir al frontend</a></p>
+        """)
+
+# Ruta principal - sirve el frontend
+@app.get("/index.html")
+async def serve_frontend():
+    """Servir la página principal del frontend"""
+    try:
+        frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/index.html")
+        return FileResponse(frontend_path)
+    except Exception as e:
+        return HTMLResponse(f"""
+        <h1>❌ Error cargando frontend</h1>
+        <p>Error: {str(e)}</p>
+        <p><a href="/docs">Ver documentación de la API</a></p>
         """)
 
 # Servir la página de predicciones
@@ -581,15 +661,47 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    import socket
+    import sys
+    
+    # Función para obtener la IP local
+    def get_local_ip():
+        """Obtiene la IP local de la máquina"""
+        try:
+            # Conectarse a un servidor externo para obtener la IP local
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return "localhost"
+    
+    local_ip = get_local_ip()
     
     if not sf.connect():
         print("❌ Failed to connect to Snowflake. Please check your credentials.")
     
     print("🚀 Iniciando servidor FastAPI...")
-    print("📱 Frontend disponible en: http://localhost:8001/index.html")
-    print("🔮 Predicciones en: http://localhost:8001/predictions")
-    print("📚 Documentación API en: http://localhost:8001/docs")
+    print("\n" + "="*60)
+    print("📍 URLs disponibles (HTTP - Local):")
+    print("="*60)
+    print(f"📱 Frontend local:  http://localhost:8001/")
+    print(f"📦 Exp Adding:      http://localhost:8001/exp_adding.html")
+    print(f"🔮 Predicciones:    http://localhost:8001/pre_flight_predictions.html")
+    print(f"📊 Dashboard:       http://localhost:8001/exp_dashboard.html")
+    print(f"📚 Documentación:   http://localhost:8001/docs")
+    print("="*60)
+    print(f"\n📍 URLs disponibles (HTTP - Móvil):")
+    print("="*60)
+    print(f"📱 Frontend móvil:  http://{local_ip}:8001/")
+    print(f"📦 Exp Adding:      http://{local_ip}:8001/exp_adding.html")
+    print("="*60)
+    print(f"\n⚠️  NOTA: Para la cámara en móvil necesitas HTTPS")
+    print(f"   Si necesitas probar la cámara, avísame y configuro HTTPS")
+    print("="*60)
+    print()
     
-    
+    # Usar HTTP por defecto (sin advertencia de seguridad)
     uvicorn.run(app, host="0.0.0.0", port=8001)
     
