@@ -1,6 +1,11 @@
+# Docker Compose configuration for ARM devices (Apple Silicon, ARM servers, etc.)
+# Usage: docker-compose -f docker-compose.arm.yml up --build
+
 services:
   smart-intelligence-api:
     build: .
+    # Use ARM64 platform for Apple Silicon and ARM servers
+    platform: linux/arm64
     container_name: smart-intelligence-api
     ports:
       - "8001:8001"
@@ -34,3 +39,4 @@ services:
 networks:
   default:
     name: smart-intelligence-network
+
