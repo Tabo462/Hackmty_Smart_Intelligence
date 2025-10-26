@@ -11,14 +11,13 @@
         --bs-primary: #070769;
         --bs-primary-rgb: 7,7,105;
       }
-      /* CORRECTED: Removed padding-top, adjusted flexbox */
       body {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
       }
       .main-content {
-        flex: 1; /* Allows content to grow and push footer down */
+        flex: 1;
       }
       #chatButton {
         position: fixed;
@@ -40,7 +39,7 @@
         max-width: 90vw;
       }
        footer {
-         margin-top: auto; /* Pushes footer down */
+         margin-top: auto;
        }
     </style>
 </head>
@@ -118,7 +117,7 @@
 
     <footer class="bg-dark text-white p-5">
       <div class="container">
-         <div class="row">
+          <div class="row">
           <div class="col-md-3 mb-4">
             <h5 class="mb-3">Smart Plate</h5>
             <p class="text-white-50">Copyright &copy; 2025 Gategroup. <br>All rights reserved.</p>
@@ -152,12 +151,59 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+
+     <script>
       window.addEventListener('pageshow', function(event) {
         if (event.persisted) {
           window.location.reload();
         }
       });
+    </script>
+
+    <script>
+        const chatWindow = document.getElementById('chatWindow');
+        const chatBody = chatWindow.querySelector('.card-body');
+        const chatInput = chatWindow.querySelector('.card-footer input');
+        const chatSendButton = chatWindow.querySelector('.card-footer button');
+
+        function addChatMessage(sender, message) {
+            const messageElement = document.createElement('p');
+            const cleanMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            messageElement.innerHTML = `<b>${sender}:</b> ${cleanMessage}`;
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+            addChatMessage('You', userMessage);
+            chatInput.value = '';
+            chatSendButton.disabled = true;
+            try {
+                const apiUrl = 'http://127.0.0.1:8000/api/chat';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json',},
+                    body: JSON.stringify({ message: userMessage }),
+                });
+                if (!response.ok) {
+                    let errorDetail = `HTTP error! status: ${response.status}`;
+                    try { const errorData = await response.json(); if (errorData.detail) errorDetail = errorData.detail; } catch (e) {}
+                    throw new Error(errorDetail);
+                }
+                const data = await response.json();
+                addChatMessage('Assistant', data.reply);
+            } catch (error) {
+                console.error('Error sending chat message:', error);
+                addChatMessage('System', `Sorry, error: ${error.message}`);
+            } finally {
+                 chatSendButton.disabled = false;
+                 chatInput.focus();
+            }
+        }
+        chatSendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') sendMessage(); });
     </script>
 
 </body>
