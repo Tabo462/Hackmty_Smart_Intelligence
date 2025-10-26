@@ -42,6 +42,346 @@
        footer {
          margin-top: auto; /* Pushes footer down */
        }
+       
+       /* Header gradient */
+       .header-gradient {
+         background: linear-gradient(135deg, #070769 0%, #2d2d9e 50%, #070769 100%);
+         position: relative;
+         overflow: hidden;
+       }
+       
+       .header-gradient::before {
+         content: '';
+         position: absolute;
+         top: -50%;
+         right: -10%;
+         width: 50%;
+         height: 200%;
+         background: radial-gradient(ellipse, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+         pointer-events: none;
+       }
+       
+       /* Dashboard specific styles */
+       .card {
+         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+         border: 1px solid rgba(0, 0, 0, 0.125);
+         border-radius: 15px;
+         transition: all 0.3s ease-in-out;
+         animation: fadeInUp 0.6s ease-out;
+       }
+       
+       .card:hover {
+         box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+         transform: translateY(-5px);
+       }
+       
+       /* Animated metric cards */
+       .metric-card {
+         border-radius: 20px;
+         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+         position: relative;
+         overflow: hidden;
+       }
+       
+       .metric-card::before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: -100%;
+         width: 100%;
+         height: 100%;
+         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+         transition: left 0.5s;
+       }
+       
+       .metric-card:hover::before {
+         left: 100%;
+       }
+       
+       .metric-card:hover {
+         transform: translateY(-8px) scale(1.02);
+         box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.3);
+       }
+       
+       /* Animated icons */
+       .metric-card i {
+         transition: all 0.3s ease-in-out;
+         animation: pulse 2s infinite;
+       }
+       
+       .metric-card:hover i {
+         transform: scale(1.2) rotate(5deg);
+       }
+       
+       @keyframes pulse {
+         0%, 100% {
+           opacity: 1;
+         }
+         50% {
+           opacity: 0.7;
+         }
+       }
+       
+       @keyframes fadeInUp {
+         from {
+           opacity: 0;
+           transform: translateY(30px);
+         }
+         to {
+           opacity: 1;
+           transform: translateY(0);
+         }
+       }
+       
+       @keyframes slideInLeft {
+         from {
+           opacity: 0;
+           transform: translateX(-30px);
+         }
+         to {
+           opacity: 1;
+           transform: translateX(0);
+         }
+       }
+       
+       /* Table animations */
+       .table-responsive {
+         max-height: 600px;
+         overflow-y: auto;
+         border-radius: 15px;
+       }
+       
+       .table tbody tr {
+         transition: all 0.2s ease-in-out;
+         animation: slideInLeft 0.5s ease-out;
+       }
+       
+       .table tbody tr:hover {
+         background-color: #f8f9fa;
+         transform: scale(1.01);
+         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+       }
+       
+       .card-header {
+         border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+         border-radius: 15px 15px 0 0;
+       }
+       
+       .badge {
+         font-size: 0.75em;
+         padding: 0.4em 0.8em;
+         border-radius: 20px;
+         transition: all 0.2s ease-in-out;
+       }
+       
+       .badge:hover {
+         transform: scale(1.1);
+       }
+       
+       code {
+         background-color: #f8f9fa;
+         color: #e83e8c;
+         padding: 0.2rem 0.4rem;
+         border-radius: 0.25rem;
+         font-size: 0.875em;
+         transition: all 0.2s ease-in-out;
+       }
+       
+       /* Chart containers */
+       .card-body canvas {
+         max-height: 350px;
+         border-radius: 10px;
+       }
+       
+       /* Gradient backgrounds for metric cards */
+       .metric-card.bg-primary {
+         background: linear-gradient(135deg, #070769 0%, #0d0d9c 100%);
+       }
+       
+       .metric-card.bg-success {
+         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+       }
+       
+       .metric-card.bg-warning {
+         background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+       }
+       
+       .metric-card.bg-danger {
+         background: linear-gradient(135deg, #dc3545 0%, #e91e63 100%);
+       }
+       
+       /* Button styles */
+       .btn {
+         border-radius: 10px;
+         transition: all 0.3s ease-in-out;
+         font-weight: 500;
+       }
+       
+       .btn:hover {
+         transform: translateY(-2px);
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+       }
+       
+       .form-control, .form-select {
+         border-radius: 10px;
+         border: 2px solid #e0e0e0;
+         transition: all 0.3s ease-in-out;
+       }
+       
+       .form-control:focus, .form-select:focus {
+         border-color: #070769;
+         box-shadow: 0 0 0 0.2rem rgba(7, 7, 105, 0.1);
+       }
+       
+       /* Export buttons */
+       .export-btn {
+         margin-left: 0.5rem;
+       }
+       
+       /* Pagination styles */
+       .pagination {
+         display: flex;
+         justify-content: center;
+         padding: 1rem;
+       }
+       
+       .page-link {
+         border-radius: 10px;
+         margin: 0 0.2rem;
+         transition: all 0.2s ease-in-out;
+       }
+       
+       .page-link:hover {
+         transform: translateY(-2px);
+       }
+       
+       /* Stagger animations for cards */
+       .card:nth-child(1) { animation-delay: 0.1s; }
+       .card:nth-child(2) { animation-delay: 0.2s; }
+       .card:nth-child(3) { animation-delay: 0.3s; }
+       .card:nth-child(4) { animation-delay: 0.4s; }
+       .card:nth-child(5) { animation-delay: 0.5s; }
+       .card:nth-child(6) { animation-delay: 0.6s; }
+       
+       /* Mobile responsiveness */
+       @media (max-width: 768px) {
+         .card-header .d-flex {
+           flex-direction: column;
+           gap: 0.5rem;
+         }
+         
+         .card-header .d-flex > * {
+           width: 100%;
+         }
+         
+         .table-responsive {
+           font-size: 0.875rem;
+         }
+         
+         .card-body canvas {
+           max-height: 250px;
+         }
+         
+         .metric-card:hover {
+           transform: translateY(-3px);
+         }
+       }
+       
+       /* Loading animation */
+       .fa-spin {
+         animation: fa-spin 1s infinite linear;
+       }
+       
+       @keyframes fa-spin {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(360deg); }
+       }
+       
+       /* Shimmer effect */
+       @keyframes shimmer {
+         0% {
+           background-position: -1000px 0;
+         }
+         100% {
+           background-position: 1000px 0;
+         }
+       }
+       
+       .shimmer {
+         animation: shimmer 2s infinite linear;
+         background: linear-gradient(
+           to right,
+           #f0f0f0 0%,
+           #e0e0e0 50%,
+           #f0f0f0 100%
+         );
+         background-size: 1000px 100%;
+       }
+       
+       /* Improved table styling */
+       .table thead th {
+         background-color: #f8f9fa !important;
+         font-weight: 600;
+         text-transform: uppercase;
+         font-size: 0.85rem;
+         letter-spacing: 0.5px;
+       }
+       
+       /* Better badge design */
+       .badge {
+         font-size: 0.75em;
+         padding: 0.5em 0.8em;
+         border-radius: 20px;
+         font-weight: 500;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+       }
+       
+       /* Smooth animations for numbers */
+       .number-counter {
+         font-weight: 700;
+         transition: all 0.3s ease;
+       }
+       
+       /* Card improvements */
+       .card-body {
+         padding: 1.5rem;
+       }
+       
+       /* Progress bar improvements */
+       .progress {
+         border-radius: 10px;
+         overflow: hidden;
+         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+       }
+       
+       .progress-bar {
+         transition: width 0.6s ease;
+         font-weight: 600;
+       }
+       
+       /* Spacing improvements */
+       .main-content {
+         padding-bottom: 2rem;
+       }
+       
+       /* Better scrollbar */
+       .table-responsive::-webkit-scrollbar {
+         height: 8px;
+       }
+       
+       .table-responsive::-webkit-scrollbar-track {
+         background: #f1f1f1;
+         border-radius: 10px;
+       }
+       
+       .table-responsive::-webkit-scrollbar-thumb {
+         background: #070769;
+         border-radius: 10px;
+       }
+       
+       .table-responsive::-webkit-scrollbar-thumb:hover {
+         background: #2d2d9e;
+       }
     </style>
 </head>
 
@@ -89,11 +429,165 @@
     </div>
 
     <div class="container-fluid mt-4 main-content">
-      <div class="row">
-        <div class="col-12 p-3">
-          <h1>Experiment: Dashboard</h1>
-          <p>This is the specific content for the Dashboard.</p>
+      <!-- Header Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="header-gradient p-4 rounded-4 shadow-sm mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <h1 class="text-white mb-2 fw-bold">
+                  <i class="fas fa-chart-line me-2"></i>Product Dashboard
+                </h1>
+                <p class="text-white-50 mb-0">
+                  <i class="fas fa-clock me-1"></i>
+                  <span id="lastUpdate">Last updated: Just now</span>
+                </p>
+              </div>
+              <div class="d-flex gap-3 mt-3 mt-md-0">
+                <div class="text-white text-center">
+                  <div class="h3 mb-0" id="headerTotalProducts">-</div>
+                  <small class="opacity-75">Products</small>
+                </div>
+                <div class="text-white text-center">
+                  <div class="h3 mb-0" id="headerHealthyProducts">-</div>
+                  <small class="opacity-75">Healthy</small>
+                </div>
+                <div class="text-white text-center">
+                  <div class="h3 mb-0" id="headerExpiringProducts">-</div>
+                  <small class="opacity-75">Expiring</small>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+              <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">📋 All Products</h5>
+              <div class="d-flex gap-2">
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search products..." style="width: 200px;">
+                <select class="form-select form-select-sm" id="statusFilter" style="width: 150px;">
+                  <option value="">All Status</option>
+                  <option value="Healthy">Healthy</option>
+                  <option value="Expiring Soon">Expiring Soon</option>
+                  <option value="Expired">Expired</option>
+                </select>
+                <button class="btn btn-light btn-sm" onclick="refreshData()">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-success btn-sm" onclick="exportToCSV()">
+                  <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="exportToPDF()">
+                  <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover" id="productsTable">
+                  <thead class="table-primary">
+                    <tr>
+                      <th>Barcode</th>
+                      <th>Product ID</th>
+                      <th>Product Name</th>
+                      <th>Lot Number</th>
+                      <th>Quantity</th>
+                      <th>Expiration Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productsTableBody">
+                    <tr>
+                      <td colspan="7" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Pagination -->
+              <nav aria-label="Product pagination">
+                <ul class="pagination justify-content-center" id="pagination">
+                  <!-- Pagination will be generated by JavaScript -->
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">📈 Product Status Distribution</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="statusChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8 mb-3">
+          <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">🏆 Top Products by Quantity</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="topProductsChart" width="800" height="350"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Status Cards -->
+      <div class="row mb-4">
+        <div class="col-md-12 mb-3">
+          <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">📦 Inventory Status</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3 text-center">
+                  <div class="mb-2">
+                    <i class="fas fa-box fa-2x text-success"></i>
+                  </div>
+                  <h4 id="totalQuantityDisplay">0</h4>
+                  <p class="text-muted mb-0">Total Quantity</p>
+                </div>
+                <div class="col-md-3 text-center">
+                  <div class="mb-2">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                  </div>
+                  <h4 id="healthyQuantityDisplay">0</h4>
+                  <p class="text-muted mb-0">Healthy Items</p>
+                </div>
+                <div class="col-md-3 text-center">
+                  <div class="mb-2">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                  </div>
+                  <h4 id="expiringQuantityDisplay">0</h4>
+                  <p class="text-muted mb-0">Expiring Soon</p>
+                </div>
+                <div class="col-md-3 text-center">
+                  <div class="mb-2">
+                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                  </div>
+                  <h4 id="expiredQuantityDisplay">0</h4>
+                  <p class="text-muted mb-0">Expired Items</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -151,8 +645,432 @@
       </div>
     </footer>
 
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
+      // Global variables
+      let statusChart, topProductsChart;
+      let allProducts = [];
+      let filteredProducts = [];
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let totalPages = 1;
+
+      // Initialize dashboard when page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+        setupEventListeners();
+      });
+
+      // Setup event listeners
+      function setupEventListeners() {
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', filterProducts);
+        document.getElementById('statusFilter').addEventListener('change', filterProducts);
+      }
+
+      // Load all dashboard data
+      async function loadDashboardData() {
+        try {
+          await Promise.all([
+            loadMetrics(),
+            loadProducts(),
+            loadCharts()
+          ]);
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          showError('Failed to load dashboard data');
+        }
+      }
+
+      // Load metrics cards
+      async function loadMetrics() {
+        try {
+          const response = await fetch('http://localhost:8001/api/dashboard/metrics');
+          const data = await response.json();
+          
+          // Update header statistics
+          document.getElementById('headerTotalProducts').textContent = data.total_products;
+          document.getElementById('headerHealthyProducts').textContent = data.healthy_products;
+          document.getElementById('headerExpiringProducts').textContent = data.expiring_products;
+          
+          // Update last update time
+          updateLastUpdateTime();
+        } catch (error) {
+          console.error('Error loading metrics:', error);
+        }
+      }
+      
+      // Update last update time
+      function updateLastUpdateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
+      }
+
+      // Load products table
+      async function loadProducts() {
+        try {
+          const response = await fetch('http://localhost:8001/api/dashboard/products');
+          const data = await response.json();
+          
+          allProducts = data.products;
+          filteredProducts = [...allProducts];
+          totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+          renderProductsTable();
+          renderPagination();
+        } catch (error) {
+          console.error('Error loading products:', error);
+        }
+      }
+
+      // Load charts data
+      async function loadCharts() {
+        try {
+          const response = await fetch('http://localhost:8001/api/dashboard/charts');
+          const data = await response.json();
+          
+          createStatusChart(data.status_distribution);
+          createTopProductsChart(data.top_products);
+          updateInventoryStatus(data.status_distribution);
+        } catch (error) {
+          console.error('Error loading charts:', error);
+        }
+      }
+      
+      // Update inventory status card
+      function updateInventoryStatus(statusData) {
+        const totalQuantity = Object.values(statusData).reduce((a, b) => a + b, 0);
+        const healthyQuantity = statusData['Healthy'] || 0;
+        const expiringQuantity = statusData['Expiring Soon'] || 0;
+        const expiredQuantity = statusData['Expired'] || 0;
+        
+        document.getElementById('totalQuantityDisplay').textContent = totalQuantity;
+        document.getElementById('healthyQuantityDisplay').textContent = healthyQuantity;
+        document.getElementById('expiringQuantityDisplay').textContent = expiringQuantity;
+        document.getElementById('expiredQuantityDisplay').textContent = expiredQuantity;
+      }
+
+      // Create status distribution chart
+      function createStatusChart(statusData) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        
+        if (statusChart) {
+          statusChart.destroy();
+        }
+        
+        const labels = Object.keys(statusData);
+        const values = Object.values(statusData);
+        const colors = ['#28a745', '#ffc107', '#dc3545']; // Green, Yellow, Red
+        
+        statusChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: colors,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+
+      // Create top products chart
+      function createTopProductsChart(topProducts) {
+        const ctx = document.getElementById('topProductsChart').getContext('2d');
+        
+        if (topProductsChart) {
+          topProductsChart.destroy();
+        }
+        
+        const labels = topProducts.map(p => p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name);
+        const values = topProducts.map(p => p.quantity);
+        
+        topProductsChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Quantity',
+              data: values,
+              backgroundColor: '#070769',
+              borderColor: '#070769',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+      }
+
+
+      // Render products table
+      function renderProductsTable() {
+        const tbody = document.getElementById('productsTableBody');
+        
+        if (filteredProducts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No products found</td></tr>';
+          return;
+        }
+        
+        // Calculate pagination
+        totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentProducts = filteredProducts.slice(startIndex, endIndex);
+        
+        tbody.innerHTML = currentProducts.map(product => {
+          const statusClass = getStatusClass(product.status);
+          return `
+            <tr>
+              <td><code>${product.barcode}</code></td>
+              <td>${product.product_id}</td>
+              <td>${product.product_name}</td>
+              <td>${product.lot_number}</td>
+              <td><span class="badge bg-secondary">${product.quantity}</span></td>
+              <td>${new Date(product.exp_date).toLocaleDateString()}</td>
+              <td><span class="badge ${statusClass}">${product.status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Get status badge class
+      function getStatusClass(status) {
+        switch (status) {
+          case 'Healthy': return 'bg-success';
+          case 'Expiring Soon': return 'bg-warning';
+          case 'Expired': return 'bg-danger';
+          default: return 'bg-secondary';
+        }
+      }
+
+        // Filter products
+      function filterProducts() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        filteredProducts = allProducts.filter(product => {
+          const matchesSearch = product.product_name.toLowerCase().includes(searchTerm) ||
+                               product.barcode.includes(searchTerm) ||
+                               product.product_id.toLowerCase().includes(searchTerm);
+          
+          const matchesStatus = !statusFilter || product.status === statusFilter;
+          
+          return matchesSearch && matchesStatus;
+        });
+        
+        currentPage = 1;
+        totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+        renderProductsTable();
+        renderPagination();
+      }
+      
+      // Render pagination
+      function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+        
+        let html = '';
+        
+        // Previous button
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>`;
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+              <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            </li>`;
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += `<li class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>`;
+          }
+        }
+        
+        // Next button
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>`;
+        
+        pagination.innerHTML = html;
+      }
+      
+      // Change page
+      function changePage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderProductsTable();
+        renderPagination();
+      }
+
+      // Refresh all data
+      function refreshData() {
+        const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+        const icon = refreshBtn.querySelector('i');
+        
+        icon.classList.add('fa-spin');
+        
+        loadDashboardData().finally(() => {
+          icon.classList.remove('fa-spin');
+        });
+      }
+
+      // Show error message
+      function showError(message) {
+        const tbody = document.getElementById('productsTableBody');
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${message}</td></tr>`;
+      }
+
+      // Export to CSV
+      function exportToCSV() {
+        if (filteredProducts.length === 0) {
+          alert('No products to export');
+          return;
+        }
+        
+        const headers = ['Barcode', 'Product ID', 'Product Name', 'Lot Number', 'Quantity', 'Expiration Date', 'Status'];
+        const csvRows = [];
+        
+        // Add headers
+        csvRows.push(headers.join(','));
+        
+        // Add data rows
+        filteredProducts.forEach(product => {
+          const row = [
+            product.barcode,
+            product.product_id,
+            `"${product.product_name}"`,
+            product.lot_number,
+            product.quantity,
+            new Date(product.exp_date).toLocaleDateString(),
+            product.status
+          ];
+          csvRows.push(row.join(','));
+        });
+        
+        // Create CSV content
+        const csvContent = csvRows.join('\n');
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `products_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Export to PDF
+      function exportToPDF() {
+        if (filteredProducts.length === 0) {
+          alert('No products to export');
+          return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.setTextColor(7, 7, 105);
+        doc.text('Products Dashboard Report', 14, 20);
+        
+        // Add date
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+        
+        // Prepare table data
+        const tableData = filteredProducts.map(product => [
+          product.barcode,
+          product.product_id,
+          product.product_name.substring(0, 20),
+          product.lot_number,
+          product.quantity.toString(),
+          new Date(product.exp_date).toLocaleDateString(),
+          product.status
+        ]);
+        
+        // Create table
+        doc.autoTable({
+          head: [['Barcode', 'Product ID', 'Product Name', 'Lot', 'Quantity', 'Exp Date', 'Status']],
+          body: tableData,
+          startY: 35,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [7, 7, 105] },
+          margin: { top: 35 }
+        });
+        
+        // Add statistics
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.setTextColor(7, 7, 105);
+        doc.text('Summary Statistics:', 14, finalY);
+        
+        const total = allProducts.length;
+        const healthy = allProducts.filter(p => p.status === 'Healthy').length;
+        const expiring = allProducts.filter(p => p.status === 'Expiring Soon').length;
+        const expired = allProducts.filter(p => p.status === 'Expired').length;
+        
+        doc.text(`Total Products: ${total}`, 14, finalY + 7);
+        doc.text(`Healthy: ${healthy}`, 14, finalY + 12);
+        doc.text(`Expiring Soon: ${expiring}`, 70, finalY + 12);
+        doc.text(`Expired: ${expired}`, 14, finalY + 17);
+        
+        // Save PDF
+        doc.save(`products_dashboard_${new Date().toISOString().split('T')[0]}.pdf`);
+      }
+
+      // Page show event
       window.addEventListener('pageshow', function(event) {
         if (event.persisted) {
           window.location.reload();
