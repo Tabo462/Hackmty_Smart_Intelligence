@@ -213,12 +213,12 @@
            <span>Chat Assistant</span>
            <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-label="Close"></button>
          </div>
-         <div class="card-body" style="height: 400px; overflow-y: scroll;">
+         <div class="card-body" id="chatBody" style="height: 400px; overflow-y: scroll;">
            <p><b>Assistant:</b> Hello! How can I help you?</p>
          </div>
          <div class="card-footer d-flex">
-           <input type="text" class="form-control" placeholder="Type your message...">
-           <button class="btn btn-primary ms-2">Send</button>
+           <input type="text" id="chatInput" class="form-control" placeholder="Type your message...">
+           <button class="btn btn-primary ms-2" id="sendMessageButton">Send</button>
          </div>
        </div>
     </div>
@@ -268,6 +268,11 @@
             }
         });
 
+        //DOM elements
+        const chatSendButton = document.getElementById('sendMessageButton');
+        const chatInput = document.getElementById('chatInput');
+        const chatBody = document.getElementById('chatBody');
+
         // Initialize chat when document is loaded
         document.addEventListener('DOMContentLoaded', function() {
             const chatWindow = document.getElementById('chatWindow');
@@ -298,8 +303,8 @@
             // 2. Send message to backend
             try {
                 // *** Use the correct URL for your backend ***
-                const apiUrl = 'http://127.0.0.1:8000/api/chat'; // Use localhost or 127.0.0.1
-                const response = await fetch(apiUrl, {
+                //const apiUrl = 'http://127.0.0.1:8000/api/chat'; // Use localhost or 127.0.0.1
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
