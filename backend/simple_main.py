@@ -12,9 +12,65 @@ import pandas as pd
 from typing import Optional
 from SnowflakeFinal import SnowflakeConnection
 from elevenlabs_manager import elevenlabs_manager
+import google.generativeai as genai 
+import sys
+from pathlib import Path
 
 # Global variable for the Snowflake Connection
 sf = SnowflakeConnection()
+
+
+# Global variable for Gemini
+# --- Configure Gemini API ---
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+modelo_gemini = None # Initialize as None
+
+if not GEMINI_API_KEY:
+    print("⚠️ GEMINI_API_KEY not found in .env file. Chatbot functionality will be limited.")
+else:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        # Use the stable Gemini 2.5 Flash model
+        modelo_gemini = genai.GenerativeModel('gemini-2.5-flash')
+        print("✅ Modelo Gemini inicializado exitosamente.")
+    except Exception as e:
+        print(f"🚨 Error al inicializar el modelo Gemini: {e}")
+        modelo_gemini = None # Ensure it's None if initialization fails
+
+try:
+    from snowflake.ia_gemini import generar_texto_gemini, modelo_gemini as ia_modelo_gemini
+    print("Imported generar_texto_gemini from ia_gemini.py")
+except Exception as e:
+    print(f"Could not import ia_gemini module: {e}")
+    generar_texto_gemini = None
+    ia_modelo_gemini = None
+
+script_path = Path(__file__).parent
+data_root_folder = script_path / "HackMTY2025_ChallengeDimensions"
+
+available_files = []
+for root, dirs, files in os.walk(data_root_folder):
+    for file in files:
+        if file.lower().endswith((".csv", ".xlsx", ".xls", ".pdf")):
+            relative_path = os.path.relpath(os.path.join(root, file), data_root_folder)
+            available_files.append(relative_path)
+
+# --- Load CSV Data ---
+CSV_FILE_PATH = "aidata/(HackMTY2025)_ConsumptionPrediction_Dataset_v1.csv" # MUST be in the same folder as main.py
+flight_data_df = None
+csv_column_names = "CSV no cargado."
+
+try:
+    # Construct path relative to main.py
+    csv_full_path = script_path / CSV_FILE_PATH
+    flight_data_df = pd.read_csv(csv_full_path)
+    flight_data_df.columns = flight_data_df.columns.str.strip()
+    csv_column_names = ", ".join(flight_data_df.columns.tolist())
+    print(f"✅ CSV '{csv_full_path}' cargado. Columnas: {csv_column_names}")
+except FileNotFoundError:
+    print(f"❌ Error: No se encontró el archivo CSV en '{csv_full_path}'.")
+except Exception as e:
+    print(f"❌ Error al cargar CSV '{csv_full_path}': {e}")
 
 predictor = AirlineConsumptionPredictor.load_trained_model("airline_consumption_model")
 if predictor is None:
@@ -69,6 +125,12 @@ class ProductRequest(BaseModel):
     quantity: int
     lot: str
     expirationDate: str
+
+class ChatMessage(BaseModel):
+    message: str
+
+class ChatMessageRequest(BaseModel): message: str
+class ChatMessageResponse(BaseModel): reply: str
 
 # Ruta principal - sirve el frontend
 @app.get("/index.html")
@@ -435,6 +497,81 @@ async def get_dashboard_charts():
     except Exception as e:
         logger.error(f"❌ Error obteniendo datos de gráficos: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo datos de gráficos: {str(e)}")
+
+# --- Chatbot Endpoint (Using actual Gemini logic) ---
+@app.post("/api/chat", response_model=ChatMessageResponse)
+async def handle_chat_message(request: ChatMessageRequest):
+    user_message = request.message
+    logger.info(f"💬 Mensaje recibido del chat: {user_message}")
+
+    # Prefer using the tested function from ia_gemini if available
+    if 'generar_texto_gemini' in globals() and generar_texto_gemini is not None:
+        use_external_generador = True
+    else:
+        use_external_generador = False
+
+    if not use_external_generador and not modelo_gemini:
+        logger.error("🚨 Modelo Gemini no está cargado. No se puede procesar el chat.")
+        raise HTTPException(status_code=503, detail="Chat service unavailable (Model not loaded).")
+
+    prompt_context = f"""
+    You are an expert assistant for airline catering data analysis.
+
+    You have access to structured and unstructured data located in the folder:
+    'HackMTY2025_ChallengeDimensions', which contains multiple subfolders and files
+    with consumption, cost, and operational metrics.
+
+    The available files include (non-exhaustive list):
+    {', '.join(available_files[:15])}...
+
+    Main dataset columns (from the main CSV): {csv_column_names}
+
+    User asks: "{user_message}"
+
+    Instructions:
+    1. Respond with professionalism and conciseness. Prioritize clarity and tone balance—formal yet approachable.
+    2. When listing items, use clean formatting such as:
+    - Bulleted points
+    - Numbered lists (1., 2., 3.)
+    - Short paragraphs
+    3. When the question involves specific data, mention that you can consult the relevant file or dataset in the HackMTY2025_ChallengeDimensions folder.
+    4. Avoid verbose explanations or unnecessary preambles. Go straight to the insight.
+    5. If the user's question is general or exploratory, summarize the key aspects clearly and elegantly.
+    6. If unsure about specific data, guide the user on how to specify what they need (e.g., file name, flight, or product).
+    """
+
+
+    try:
+        logger.info(f"🤖 Enviando a Gemini: '{prompt_context[:100]}...'" )
+        # If available, use the tested generar_texto_gemini function from ia_gemini.py
+        if use_external_generador:
+            try:
+                response_text = generar_texto_gemini(prompt_context)
+            except Exception as e:
+                logger.error(f"Error calling generar_texto_gemini: {e}")
+                raise HTTPException(status_code=500, detail=f"Error generating response: {e}")
+        else:
+            try:
+                respuesta = modelo_gemini.generate_content(prompt_context)
+                response_text = respuesta.text
+            except Exception as e:
+                logger.error(f"Error generating content with modelo_gemini: {e}")
+                raise HTTPException(status_code=500, detail=f"Error generating response: {e}")
+            
+        # Basic cleanup to remove potential leftover markdown list starters
+        response_text = response_text.replace("* ", "").replace("- ", "")
+        lines = response_text.split('\n')
+        cleaned_lines = [line.lstrip('0123456789. ') for line in lines]
+        gemini_reply = "\n".join(cleaned_lines)
+
+        logger.info(f"🤖 Respuesta recibida (len {len(response_text) if response_text else 0})...")
+        return ChatMessageResponse(reply=response_text)
+
+    except Exception as e:
+        logger.error(f"❌ Error al llamar a Gemini API: {e}")
+        # Provide a user-friendly error, but log the specific details
+        raise HTTPException(status_code=500, detail="Error communicating with the AI assistant.")
+
 
 # Endpoint de salud
 @app.get("/api/health")
