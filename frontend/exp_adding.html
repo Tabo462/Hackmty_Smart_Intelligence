@@ -239,7 +239,7 @@
            transform: translateY(-2px);
            box-shadow: 0 4px 12px rgba(7, 7, 105, 0.4);
        }
-       
+
        /* Scanner container improvements */
        .scanner-container-wrapper {
          animation: fadeInUp 0.8s ease-out;
@@ -249,6 +249,62 @@
          border: 3px solid #070769 !important;
          box-shadow: 0 8px 30px rgba(7, 7, 105, 0.3) !important;
          transition: all 0.3s ease !important;
+       }
+       
+       /* Center the video feed within the scanner container */
+       #scanner-container video {
+         width: 100%;
+         height: 100%;
+         object-fit: cover;
+         object-position: center;
+       }
+       
+       /* Ensure canvas elements are properly aligned */
+       #scanner-container canvas {
+         position: absolute;
+         top: 50%;
+         left: 50%;
+         transform: translate(-50%, -50%);
+       }
+       
+       /* Barcode scanning area overlay - matches the actual scan area (20% margins) */
+       .scan-area-overlay {
+         position: absolute;
+         top: 20%;
+         left: 20%;
+         right: 20%;
+         bottom: 20%;
+         border: 3px solid #28a745;
+         border-radius: 10px;
+         pointer-events: none;
+         z-index: 20;
+         box-shadow: inset 0 0 0 2px rgba(40, 167, 69, 0.3);
+         display: none; /* Hidden by default, shown when scanner starts */
+       }
+       
+       .scan-area-overlay::before,
+       .scan-area-overlay::after {
+         content: '';
+         position: absolute;
+         width: 40px;
+         height: 40px;
+         border: 4px solid #28a745;
+       }
+       
+       .scan-area-overlay::before {
+         top: -4px;
+         left: -4px;
+         border-right: none;
+         border-bottom: none;
+         border-top-left-radius: 10px;
+       }
+       
+       .scan-area-overlay::after {
+         bottom: -4px;
+         right: -4px;
+         border-left: none;
+         border-top: none;
+         border-bottom-right-radius: 10px;
        }
        
        #scanner-container:hover {
@@ -411,7 +467,10 @@
             
             <div id="status" class="alert alert-info text-center mb-3">Scanner stopped</div>
             
-            <div id="scanner-container" class="mx-auto mb-4" style="width: 100%; max-width: 700px; height: 500px; position: relative; border: 3px solid #E1F1F6; border-radius: 15px; overflow: hidden; background: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"></div>
+            <div id="scanner-container" class="mx-auto mb-4" style="width: 100%; max-width: 700px; height: 500px; position: relative; border: 3px solid #E1F1F6; border-radius: 15px; overflow: hidden; background: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+              <!-- Visual guide showing the actual scan area -->
+              <div class="scan-area-overlay" id="scanAreaOverlay"></div>
+            </div>
             
             <div id="result" class="alert alert-success" style="display: none;">
               <strong>Detected Barcode:</strong> <span id="barcodeResult"></span>
@@ -434,7 +493,7 @@
                         <div class="form-group">
                             <label for="barcode">Barcode:</label>
                             <input type="text" id="barcode" name="barcode" readonly>
-                        </div>
+          </div>
                         <div class="form-group">
                             <label for="productID">ProductID:</label>
                             <input type="text" id="productID" name="productID" placeholder="Auto-filled if exists">
@@ -864,7 +923,7 @@
               width: { ideal: 1280, max: 1280 },
               height: { ideal: 720, max: 720 },
               facingMode: "environment",
-              frameRate: { ideal: 10, max: 10 },  // Limitar framerate a exactamente 10 FPS
+              frameRate: { ideal: 10, max: 10 },  // Back to 10 FPS
               aspectRatio: { ideal: 16/9 }
           };
           
@@ -881,22 +940,15 @@
                   target: document.querySelector('#scanner-container'),
                   constraints: constraints,
                   area: { // Área de escaneo expandida para mejor detección
-                      top: "10%",
-                      right: "10%",
-                      left: "10%",
-                      bottom: "10%"
+                      top: "20%",
+                      right: "20%",
+                      left: "20%",
+                      bottom: "20%"
                   }
               },
               decoder: {
                   readers: [
                       "ean_reader",           // EAN-13, EAN-8
-                      "ean_8_reader",        // EAN-8 specific
-                      "code_128_reader",     // Code 128 (very common)
-                      "code_39_reader",      // Code 39 (common)
-                      "codabar_reader",      // Codabar
-                      "upc_reader",          // UPC-A, UPC-E
-                      "upc_e_reader",        // UPC-E specific
-                      "i2of5_reader"         // Interleaved 2 of 5
                   ],
                   debug: {
                       drawBoundingBox: false,
@@ -933,6 +985,12 @@
               
               console.log("QuaggaJS initialized successfully.");
               updateStatus('Scanner running - Point camera at barcode', 'scanning');
+              
+              // Show scan area overlay when scanner starts
+              const scanOverlay = document.getElementById('scanAreaOverlay');
+              if (scanOverlay) {
+                  scanOverlay.style.display = 'block';
+              }
               
               // Start scanning
               Quagga.start();
@@ -1031,6 +1089,12 @@
               
               updateStatus('Scanner stopped', 'stopped');
               
+              // Hide scan area overlay when scanner stops
+              const scanOverlay = document.getElementById('scanAreaOverlay');
+              if (scanOverlay) {
+                  scanOverlay.style.display = 'none';
+              }
+              
               // Update buttons
               startBtn.disabled = false;
               stopBtn.disabled = true;
@@ -1077,9 +1141,35 @@
           }
       }
       
+      // Request camera permission on page load
+      async function requestCameraPermission() {
+          try {
+              // Request access to camera to get permission popup
+              const stream = await navigator.mediaDevices.getUserMedia({ 
+                  video: { 
+                      facingMode: "environment" 
+                  } 
+              });
+              
+              // Stop the stream immediately after getting permission
+              stream.getTracks().forEach(track => track.stop());
+              
+              console.log('Camera permission granted');
+              updateStatus('Camera permission granted - Ready to scan', 'stopped');
+              
+              // Now initialize the default camera
+              initializeDefaultCamera();
+          } catch (error) {
+              console.error('Error requesting camera permission:', error);
+              updateStatus('Camera permission denied - Click "Start Scanner" to try again', 'error');
+              initializeDefaultCamera();
+          }
+      }
+      
       // Initialize on page load
       document.addEventListener('DOMContentLoaded', function() {
-          initializeDefaultCamera();
+          updateStatus('Requesting camera permission...', 'scanning');
+          requestCameraPermission();
       });
       
       // Initial status
