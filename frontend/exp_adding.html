@@ -491,12 +491,12 @@
            <span>Chat Assistant</span>
            <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-label="Close"></button>
          </div>
-         <div class="card-body" style="height: 400px; overflow-y: scroll;">
+         <div class="card-body" id="chatBody" style="height: 400px; overflow-y: scroll;">
            <p><b>Assistant:</b> Hello! How can I help you?</p>
          </div>
          <div class="card-footer d-flex">
-           <input type="text" class="form-control" placeholder="Type your message...">
-           <button class="btn btn-primary ms-2">Send</button>
+           <input type="text" id="chatInput" class="form-control" placeholder="Type your message...">
+           <button class="btn btn-primary ms-2" id="sendMessageButton">Send</button>
          </div>
        </div>
     </div>
@@ -1090,6 +1090,86 @@
         if (event.persisted) {
           window.location.reload();
         }
+      });
+
+      // Chat functionality
+      //DOM elements
+      const chatSendButton = document.getElementById('sendMessageButton');
+      const chatInput = document.getElementById('chatInput');
+      const chatBody = document.getElementById('chatBody');
+
+      // Initialize chat when document is loaded
+      document.addEventListener('DOMContentLoaded', function() {
+          // Chat is ready - no need for initChat function
+          console.log('Chat initialized');
+      });
+
+      // Function to add a message to the chat body
+      function addChatMessage(sender, message) {
+          const messageElement = document.createElement('p');
+          // Basic formatting - sanitize message slightly
+          const cleanMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          messageElement.innerHTML = `<b>${sender}:</b> ${cleanMessage}`;
+          chatBody.appendChild(messageElement);
+          // Scroll to the bottom
+          chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      // Function to handle sending a message
+      async function sendChatMessage() {
+          const userMessage = chatInput.value.trim();
+          if (!userMessage) return; // Don't send empty messages
+
+          // 1. Display user message immediately
+          addChatMessage('You', userMessage);
+          chatInput.value = ''; // Clear input
+          chatSendButton.disabled = true; // Disable button while waiting
+
+          // 2. Send message to backend
+          try {
+              const response = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ message: userMessage }),
+              });
+
+              if (!response.ok) {
+                  // Try to get error detail from backend response if available
+                  let errorDetail = `HTTP error! status: ${response.status}`;
+                  try {
+                      const errorData = await response.json();
+                      if (errorData.detail) {
+                         errorDetail = errorData.detail;
+                      }
+                  } catch (e) { /* Ignore if response is not JSON */ }
+                  throw new Error(errorDetail);
+              }
+
+              const data = await response.json();
+
+              // 3. Display assistant's reply
+              addChatMessage('Assistant', data.reply);
+
+          } catch (error) {
+              console.error('Error sending chat message:', error);
+              // Display the specific error message from fetch or backend
+              addChatMessage('System', `Sorry, I encountered an error: ${error.message}`);
+          } finally {
+               chatSendButton.disabled = false; // Re-enable button
+               chatInput.focus(); // Focus input for next message
+          }
+      }
+
+      // Event listener for the send button
+      chatSendButton.addEventListener('click', sendChatMessage);
+
+      // Event listener for pressing Enter in the input field
+      chatInput.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+              sendChatMessage();
+          }
       });
     </script>
 
