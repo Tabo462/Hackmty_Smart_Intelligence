@@ -267,6 +267,175 @@ async def save_product(request: ProductRequest):
         logger.error(f"❌ Error en save_product: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
+# Endpoints para el Dashboard
+@app.get("/api/dashboard/metrics")
+async def get_dashboard_metrics():
+    """Obtiene métricas generales para el dashboard"""
+    try:
+        logger.info("📊 Obteniendo métricas del dashboard")
+        
+        # Total de productos
+        total_query = "SELECT COUNT(*) as total FROM PRODUCT_DATA"
+        total_result = sf.execute_query(total_query)
+        total_products = total_result[0][0] if total_result else 0
+        
+        # Productos próximos a vencer (30 días)
+        expiring_query = """
+        SELECT COUNT(*) as expiring 
+        FROM PRODUCT_DATA 
+        WHERE Exp_Date <= DATEADD(day, 30, CURRENT_DATE()) 
+        AND Exp_Date >= CURRENT_DATE()
+        """
+        expiring_result = sf.execute_query(expiring_query)
+        expiring_products = expiring_result[0][0] if expiring_result else 0
+        
+        # Productos vencidos
+        expired_query = """
+        SELECT COUNT(*) as expired 
+        FROM PRODUCT_DATA 
+        WHERE Exp_Date < CURRENT_DATE()
+        """
+        expired_result = sf.execute_query(expired_query)
+        expired_products = expired_result[0][0] if expired_result else 0
+        
+        # Suma total de cantidades
+        quantity_query = "SELECT SUM(Quantity) as total_quantity FROM PRODUCT_DATA"
+        quantity_result = sf.execute_query(quantity_query)
+        total_quantity = quantity_result[0][0] if quantity_result and quantity_result[0][0] else 0
+        
+        return {
+            "total_products": total_products,
+            "expiring_products": expiring_products,
+            "expired_products": expired_products,
+            "total_quantity": total_quantity,
+            "healthy_products": total_products - expiring_products - expired_products
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo métricas: {e}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo métricas: {str(e)}")
+
+@app.get("/api/dashboard/products")
+async def get_dashboard_products():
+    """Obtiene lista de productos para el dashboard"""
+    try:
+        logger.info("📋 Obteniendo lista de productos")
+        
+        query = """
+        SELECT 
+            Barcode,
+            ProductID,
+            ProductName,
+            LotNumber,
+            Quantity,
+            Exp_Date,
+            CASE 
+                WHEN Exp_Date < CURRENT_DATE() THEN 'Expired'
+                WHEN Exp_Date <= DATEADD(day, 30, CURRENT_DATE()) THEN 'Expiring Soon'
+                ELSE 'Healthy'
+            END as Status
+        FROM PRODUCT_DATA 
+        ORDER BY Exp_Date ASC
+        """
+        
+        result = sf.execute_query(query)
+        
+        if not result:
+            return {"products": []}
+        
+        products = []
+        for row in result:
+            products.append({
+                "barcode": row[0],
+                "product_id": row[1],
+                "product_name": row[2],
+                "lot_number": row[3],
+                "quantity": row[4],
+                "exp_date": str(row[5]),
+                "status": row[6]
+            })
+        
+        return {"products": products}
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo productos: {e}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo productos: {str(e)}")
+
+@app.get("/api/dashboard/charts")
+async def get_dashboard_charts():
+    """Obtiene datos para gráficos del dashboard"""
+    try:
+        logger.info("📈 Obteniendo datos para gráficos")
+        
+        # Productos por estado
+        status_query = """
+        SELECT 
+            CASE 
+                WHEN Exp_Date < CURRENT_DATE() THEN 'Expired'
+                WHEN Exp_Date <= DATEADD(day, 30, CURRENT_DATE()) THEN 'Expiring Soon'
+                ELSE 'Healthy'
+            END as Status,
+            COUNT(*) as Count
+        FROM PRODUCT_DATA 
+        GROUP BY Status
+        ORDER BY Count DESC
+        """
+        
+        status_result = sf.execute_query(status_query)
+        status_data = {}
+        if status_result:
+            for row in status_result:
+                status_data[row[0]] = row[1]
+        
+        # Top 10 productos por cantidad
+        top_products_query = """
+        SELECT ProductName, SUM(Quantity) as TotalQuantity
+        FROM PRODUCT_DATA 
+        GROUP BY ProductName
+        ORDER BY TotalQuantity DESC
+        LIMIT 10
+        """
+        
+        top_result = sf.execute_query(top_products_query)
+        top_products = []
+        if top_result:
+            for row in top_result:
+                top_products.append({
+                    "name": row[0],
+                    "quantity": row[1]
+                })
+        
+        # Productos próximos a vencer por fecha
+        expiring_timeline_query = """
+        SELECT 
+            Exp_Date,
+            COUNT(*) as Count
+        FROM PRODUCT_DATA 
+        WHERE Exp_Date <= DATEADD(day, 30, CURRENT_DATE()) 
+        AND Exp_Date >= CURRENT_DATE()
+        GROUP BY Exp_Date
+        ORDER BY Exp_Date ASC
+        """
+        
+        timeline_result = sf.execute_query(expiring_timeline_query)
+        timeline_data = []
+        if timeline_result:
+            for row in timeline_result:
+                timeline_data.append({
+                    "date": str(row[0]),
+                    "count": row[1]
+                })
+        
+        return {
+            "status_distribution": status_data,
+            "top_products": top_products,
+            "expiring_timeline": timeline_data
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo datos de gráficos: {e}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo datos de gráficos: {str(e)}")
+
 # Endpoint de salud
 @app.get("/api/health")
 async def health_check():
@@ -276,6 +445,9 @@ async def health_check():
         "message": "Backend funcionando correctamente",
         "endpoints": [
             "/api/predict - POST - Predicciones",
+            "/api/dashboard/metrics - GET - Métricas del dashboard",
+            "/api/dashboard/products - GET - Lista de productos",
+            "/api/dashboard/charts - GET - Datos para gráficos",
             "/api/health - GET - Estado del sistema",
             "/ - GET - Página principal",
             "/predictions - GET - Página de predicciones"
@@ -287,8 +459,8 @@ if __name__ == "__main__":
     if not sf.connect():
         print("❌ Failed to connect to Snowflake. Please check your credentials.")
     print("🚀 Iniciando servidor FastAPI...")
-    print("📱 Frontend disponible en: http://localhost:8000/index.html")
-    print("🔮 Predicciones en: http://localhost:8000/predictions")
-    print("📚 Documentación API en: http://localhost:8000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print("📱 Frontend disponible en: http://localhost:8001/index.html")
+    print("🔮 Predicciones en: http://localhost:8001/predictions")
+    print("📚 Documentación API en: http://localhost:8001/docs")
+    uvicorn.run(app, host="0.0.0.0", port=8001)
     
