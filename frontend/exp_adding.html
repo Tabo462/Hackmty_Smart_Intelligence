@@ -788,6 +788,8 @@
               
               const data = await response.json();
               
+              console.log('🔍 Backend response:', data); // Debug log
+              
               if (data.exists) {
                   // Product exists - autofill ProductID and Product Name
                   productIDInput.value = data.productID || '';
@@ -799,13 +801,24 @@
                   if (data.expirationDate) expirationDateInput.value = data.expirationDate;
                   
                   updateStatus('✅ Product found in database', 'scanning');
+                  
+                  // Play audio if available
+                  if (data.audio_base64) {
+                      playAudioFromBase64(data.audio_base64, true); // true = product found
+                  }
               } else {
                   // Product doesn't exist
                   productIDInput.value = '';
                   productNameInput.value = '';
                   productIDInput.placeholder = 'No existe';
                   productNameInput.placeholder = 'No existe';
+
                   updateStatus('❌ Product not found in database', 'error');
+                  
+                  // Play audio if available
+                  if (data.audio_base64) {
+                      playAudioFromBase64(data.audio_base64, false); // false = product not found
+                  }
               }
           } catch (error) {
               console.error('Error checking barcode:', error);
@@ -1295,6 +1308,73 @@
           window.location.reload();
         }
       });
+
+      // Audio playback function for base64 audio
+      function playAudioFromBase64(audioBase64, productFound = false) {
+          try {
+              const statusMessage = productFound ? 'product found' : 'product not found';
+              console.log(`🔊 Playing audio notification for ${statusMessage}`);
+              
+              // Create audio element
+              const audio = new Audio();
+              
+              // Set the audio source to the base64 data (try MP3 first, then MP4/AAC)
+              audio.src = `data:audio/mp3;base64,${audioBase64}`;
+              
+              // Add error handler for audio loading
+              audio.onerror = function(e) {
+                  console.warn('❌ MP3 failed, trying MP4/AAC format');
+                  audio.src = `data:audio/mp4;base64,${audioBase64}`;
+              };
+              
+              // Play the audio with volume control
+              audio.volume = 0.8; // Set to 80% volume
+              audio.play().then(() => {
+                  console.log('✅ Audio played successfully');
+                  // Visual feedback that audio played (different for found vs not found)
+                  if (productFound) {
+                      updateStatus('🔊 Product found - Audio notification played', 'scanning');
+                  } else {
+                      updateStatus('🔊 Product not found - Audio notification played', 'error');
+                  }
+              }).catch((error) => {
+                  console.error('❌ Error playing audio:', error);
+                  // Fallback: show a more prominent visual notification
+                  if (productFound) {
+                      updateStatus('🔊 Product found in database (Audio notification failed)', 'scanning');
+                  } else {
+                      updateStatus('🔊 Product not found in database (Audio notification failed)', 'error');
+                  }
+                  
+                  // Try alternative audio notification (browser beep if supported)
+                  try {
+                      // Create a simple beep sound as fallback
+                      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                      const oscillator = audioContext.createOscillator();
+                      const gainNode = audioContext.createGain();
+                      
+                      oscillator.connect(gainNode);
+                      gainNode.connect(audioContext.destination);
+                      
+                      oscillator.frequency.value = 800; // 800 Hz beep
+                      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                      
+                      oscillator.start(audioContext.currentTime);
+                      oscillator.stop(audioContext.currentTime + 0.5);
+                      
+                      console.log('✅ Fallback beep sound played');
+                  } catch (beepError) {
+                      console.error('❌ Fallback beep also failed:', beepError);
+                  }
+              });
+              
+          } catch (error) {
+              console.error('❌ Error creating audio from base64:', error);
+              // Fallback: show a visual notification
+              updateStatus('🔊 Product not found in database', 'error');
+          }
+      }
 
       // Chat functionality
       //DOM elements

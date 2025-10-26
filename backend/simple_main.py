@@ -327,13 +327,17 @@ async def check_barcode(request: BarcodeRequest):
         if result["exists"]:
             # Producto existe
             logger.info(f"✅ Producto encontrado: {result['product_info']['product_name']}")
+            audio_text = "El producto está en la base de datos"
+            audio_base64 = elevenlabs_manager.text_to_speech_base64(audio_text)
+
             return BarcodeResponse(
                 exists=True,
                 productID=result["product_info"]["product_id"],
                 productName=result["product_info"]["product_name"],
                 quantity=result["product_info"]["quantity"],
                 lot=result["product_info"]["lot_number"],
-                expirationDate=str(result["product_info"]["exp_date"])
+                expirationDate=str(result["product_info"]["exp_date"]),
+                audio_base64=audio_base64
             )
         else:
             # Producto no existe - generar audio
