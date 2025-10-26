@@ -170,7 +170,7 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Iniciando servidor FastAPI...")
-    print("📱 Frontend disponible en: http://localhost:8000")
+    print("📱 Frontend disponible en: http://localhost:8000/index.html")
     print("🔮 Predicciones en: http://localhost:8000/predictions")
     print("📚 Documentación API en: http://localhost:8000/docs")
     uvicorn.run(app, host="0.0.0.0", port=8000)
