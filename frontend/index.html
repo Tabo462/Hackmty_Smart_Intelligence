@@ -77,7 +77,36 @@
        footer {
          margin-top: auto; /* Pushes footer down */
        }
+       
+       /* Card hover effects */
+       .card:hover {
+         transform: translateY(-10px);
+         box-shadow: 0 8px 25px rgba(7, 7, 105, 0.3) !important;
+       }
+       
+       /* Smooth transitions */
+       .card {
+         transition: all 0.3s ease-in-out;
+       }
+       
+       .btn {
+         border-radius: 10px;
+         transition: all 0.3s ease-in-out;
+         font-weight: 500;
+       }
+       
+       .btn:hover {
+         transform: translateY(-2px);
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+       }
+       
+       /* Icon colors */
+       .fa-plus-circle, .fa-chart-bar, .fa-plane {
+         color: #070769;
+       }
     </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
@@ -135,45 +164,45 @@
       </div>
 
       <div class="container my-5">
-         <h2 class="text-center mb-4">Expiration Management</h2>
-        <div id="portfolioCarousel" class="carousel slide" data-bs-ride="carousel">
-          <div class="carousel-indicators">
-            <button type="button" data-bs-target="#portfolioCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-            <button type="button" data-bs-target="#portfolioCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-          </div>
-          <div class="carousel-inner">
-            <div class="carousel-item active">
-              <div class="d-flex justify-content-center p-5 h-100">
-                <div class="card text-center" style="width: 25rem;">
-                  <div class="card-body d-flex flex-column justify-content-center">
-                    <h5 class="card-title">Add New Expiration Data</h5>
-                    <p class="card-text">Use this tool to input new product or expiration information.</p>
-                    <a href="exp_adding.html" class="btn btn-primary">Go to Adding Page</a>
-                  </div>
+         <h2 class="text-center mb-5">Smart Product Manager</h2>
+         <div class="row justify-content-center g-4">
+            <div class="col-md-4">
+              <div class="card text-center h-100" style="border-radius: 15px; box-shadow: 0 4px 15px rgba(7, 7, 105, 0.2); transition: all 0.3s ease;">
+                <div class="card-body d-flex flex-column justify-content-center p-4">
+                  <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                  <h5 class="card-title">Add New Expiration Data</h5>
+                  <p class="card-text">Use this tool to input new product or expiration information.</p>
+                  <a href="exp_adding.html" class="btn btn-primary btn-lg mt-auto">
+                    <i class="fas fa-qrcode me-2"></i>Go to Adding Page
+                  </a>
                 </div>
               </div>
             </div>
-            <div class="carousel-item">
-              <div class="d-flex justify-content-center p-5 h-100">
-                <div class="card text-center" style="width: 25rem;">
-                  <div class="card-body d-flex flex-column justify-content-center">
-                    <h5 class="card-title">View Dashboard</h5>
-                    <p class="card-text">See the complete dashboard of all current expiration data.</p>
-                    <a href="exp_dashboard.html" class="btn btn-primary">Go to Dashboard</a>
-                  </div>
+            <div class="col-md-4">
+              <div class="card text-center h-100" style="border-radius: 15px; box-shadow: 0 4px 15px rgba(7, 7, 105, 0.2); transition: all 0.3s ease;">
+                <div class="card-body d-flex flex-column justify-content-center p-4">
+                  <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                  <h5 class="card-title">View Dashboard</h5>
+                  <p class="card-text">See the complete dashboard of all current expiration data.</p>
+                  <a href="exp_dashboard.html" class="btn btn-primary btn-lg mt-auto">
+                    <i class="fas fa-table me-2"></i>Go to Dashboard
+                  </a>
                 </div>
               </div>
             </div>
-          </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#portfolioCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#portfolioCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-          </button>
-        </div>
+            <div class="col-md-4">
+              <div class="card text-center h-100" style="border-radius: 15px; box-shadow: 0 4px 15px rgba(7, 7, 105, 0.2); transition: all 0.3s ease;">
+                <div class="card-body d-flex flex-column justify-content-center p-4">
+                  <i class="fas fa-plane fa-3x text-primary mb-3"></i>
+                  <h5 class="card-title">Pre-Flight Predictions</h5>
+                  <p class="card-text">Analyze and predict product consumption for flights.</p>
+                  <a href="pre_flight_predictions.html" class="btn btn-primary btn-lg mt-auto">
+                    <i class="fas fa-chart-line me-2"></i>Go to Predictions
+                  </a>
+                </div>
+              </div>
+            </div>
+         </div>
       </div>
     </div> <button class="btn btn-primary btn-lg rounded-circle shadow" type="button" id="chatButton" data-bs-toggle="collapse" data-bs-target="#chatWindow" aria-expanded="false" aria-controls="chatWindow">
       <img src="media_files/gemini_logo.png" alt="Gemini Logo" width="30" height="30" style="filter: brightness(0) invert(1);">
