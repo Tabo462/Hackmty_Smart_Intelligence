@@ -370,6 +370,52 @@
        }
        
        @media (max-width: 768px) {
+           /* Header optimization */
+           .header-gradient h1 {
+               font-size: 1.5rem !important;
+           }
+           
+           .header-gradient p {
+               font-size: 0.9rem;
+           }
+           
+           /* Navbar brand optimization */
+           .navbar-brand span {
+               font-size: 1rem !important;
+           }
+           
+           /* Scanner title */
+           .scanner-container-wrapper h2 {
+               font-size: 1.3rem;
+           }
+           
+           /* Scanner buttons - change to grid */
+           .controls {
+               display: grid;
+               grid-template-columns: 1fr 1fr;
+               gap: 0.5rem;
+           }
+           
+           .controls button {
+               width: 100%;
+               margin: 0 !important;
+               font-size: 0.875rem;
+               padding: 0.5rem;
+           }
+           
+           /* Scanner container */
+           #scanner-container {
+               height: 300px !important;
+               max-width: 100% !important;
+           }
+           
+           /* Alerts */
+           .alert {
+               font-size: 0.875rem;
+               padding: 0.75rem;
+           }
+           
+           /* Form improvements */
            .form-row {
                flex-direction: column;
                gap: 15px;
@@ -380,7 +426,75 @@
            }
 
            .product-form {
+               padding: 15px;
+               margin-top: 20px;
+           }
+           
+           .product-form h2 {
+               font-size: 1.25rem;
+               margin-bottom: 15px;
+           }
+           
+           .product-form .form-group {
+               margin-bottom: 15px;
+           }
+           
+           .product-form label {
+               font-size: 0.9rem;
+           }
+           
+           .product-form input,
+           .product-form select {
+               font-size: 0.9rem;
+               padding: 0.5rem;
+           }
+           
+           .product-form button {
+               width: 100%;
+               padding: 0.75rem;
+               font-size: 1rem;
+           }
+           
+           /* Chat window */
+           #chatWindow {
+               width: 90vw;
+               right: 5vw;
+           }
+           
+           .card-body {
+               height: 300px !important;
+           }
+           
+           /* Modal improvements */
+           #cameraModal > div {
+               width: 95% !important;
                padding: 20px;
+           }
+           
+           /* Container padding */
+           .container-fluid {
+               padding-left: 0.75rem !important;
+               padding-right: 0.75rem !important;
+           }
+           
+           .main-content .col-12.p-3 {
+               padding: 0.5rem !important;
+           }
+       }
+       
+       /* Extra small devices */
+       @media (max-width: 576px) {
+           .controls button {
+               font-size: 0.8rem;
+               padding: 0.4rem;
+           }
+           
+           #scanner-container {
+               height: 250px !important;
+           }
+           
+           .product-form {
+               padding: 10px;
            }
        }
     </style>

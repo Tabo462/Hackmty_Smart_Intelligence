@@ -207,8 +207,128 @@
        
        /* Mobile responsiveness */
        @media (max-width: 768px) {
+         /* Header optimization */
+         .header-gradient h1 {
+           font-size: 1.5rem !important;
+         }
+         
+         .header-gradient p {
+           font-size: 0.9rem;
+         }
+         
+         /* Navbar brand optimization */
+         .navbar-brand span {
+           font-size: 1rem !important;
+         }
+         
+         /* Form section */
          .form-section {
            padding: 1rem;
+         }
+         
+         .form-section h2 {
+           font-size: 1.25rem;
+         }
+         
+         .form-section h4 {
+           font-size: 1.1rem;
+         }
+         
+         .form-section h5 {
+           font-size: 1rem;
+         }
+         
+         /* Form inputs */
+         .form-control, .form-select {
+           font-size: 0.9rem;
+         }
+         
+         /* Buttons */
+         .btn {
+           font-size: 0.9rem;
+           padding: 0.6rem 1rem;
+         }
+         
+         .btn-lg {
+           width: 100%;
+           padding: 0.75rem;
+         }
+         
+         /* Table */
+         .table {
+           font-size: 0.8rem;
+         }
+         
+         .table th, .table td {
+           padding: 0.5rem;
+         }
+         
+         /* Selected products list */
+         #selectedProductsList li {
+           padding: 10px;
+           font-size: 0.85rem;
+           flex-direction: column;
+           gap: 0.5rem;
+         }
+         
+         #selectedProductsList button {
+           width: 100%;
+           margin-top: 0.5rem;
+         }
+         
+         /* Grid adjustments */
+         .row.g-3 > div {
+           margin-bottom: 0.75rem;
+         }
+         
+         /* Card improvements */
+         .card-header h3 {
+           font-size: 1.2rem;
+         }
+         
+         .card-body {
+           padding: 1rem;
+         }
+         
+         /* Chat window */
+         #chatWindow {
+           width: 90vw;
+           right: 5vw;
+         }
+         
+         #chatWindow .card-body {
+           height: 300px !important;
+         }
+         
+         /* Container padding */
+         .container-fluid {
+           padding-left: 0.75rem !important;
+           padding-right: 0.75rem !important;
+         }
+         
+         .main-content {
+           padding-bottom: 1rem;
+         }
+         
+         /* Badge sizing */
+         .badge {
+           font-size: 0.75rem;
+         }
+       }
+       
+       /* Extra small devices */
+       @media (max-width: 576px) {
+         .form-section {
+           padding: 0.75rem;
+         }
+         
+         .btn {
+           font-size: 0.85rem;
+           padding: 0.5rem 0.75rem;
+         }
+         
+         .table {
+           font-size: 0.75rem;
          }
        }
        
@@ -837,9 +957,9 @@
                 // Create HTML for displaying results
                 let resultsHTML = `
                     <div class="card">
-                        <div class="card-header">
-                            <h5>Prediction Results for ${data.flight_info.origin} ${data.flight_info.flight_type} (${data.flight_info.service_type})</h5>
-                            <p class="mb-0">${data.flight_info.passenger_count} passengers</p>
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="text-white mb-1">Prediction Results for ${data.flight_info.origin} ${data.flight_info.flight_type} (${data.flight_info.service_type})</h5>
+                            <p class="mb-0 text-white-50">${data.flight_info.passenger_count} passengers</p>
                         </div>
                         <div class="card-body">
                             <table class="table table-striped">
