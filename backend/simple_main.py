@@ -10,8 +10,11 @@ import random
 from aidata.Random_Forest_Regression import AirlineConsumptionPredictor
 import pandas as pd
 from typing import Optional
-from snowflake_manager import snowflake_manager
+from SnowflakeFinal import SnowflakeConnection
 from elevenlabs_manager import elevenlabs_manager
+
+# Global variable for the Snowflake Connection
+sf = SnowflakeConnection()
 
 predictor = AirlineConsumptionPredictor.load_trained_model("airline_consumption_model")
 if predictor is None:
@@ -54,6 +57,18 @@ class BarcodeResponse(BaseModel):
 
 class BarcodeRequest(BaseModel):
     barcode: str
+
+class SaveResponse(BaseModel):
+    success: bool
+    message: str
+
+class ProductRequest(BaseModel):
+    barcode: str
+    productID: str
+    productName: str
+    quantity: int
+    lot: str
+    expirationDate: str
 
 # Ruta principal - sirve el frontend
 @app.get("/index.html")
@@ -174,25 +189,23 @@ async def check_barcode(request: BarcodeRequest):
     """
     logger.info(f"🔍 Verificando barcode: {request.barcode}")
     try:
-        logger.info(f"🔍 Verificando barcode: {request.barcode}")
-        
-        # Verificar en Snowflake
-        
-        result = snowflake_manager.check_barcode_exists(request.barcode)
-        
+        logger.info(f"🔍 Verificando barcode: {request.barcode.strip()}")
+
+        result = sf.check_barcode_exists(request.barcode.strip())
+
         if result is None:
             raise HTTPException(status_code=500, detail="Error conectando a la base de datos")
         
         if result["exists"]:
             # Producto existe
-            logger.info(f"✅ Producto encontrado: {result['productName']}")
+            logger.info(f"✅ Producto encontrado: {result['product_info']['product_name']}")
             return BarcodeResponse(
                 exists=True,
-                productID=result["productID"],
-                productName=result["productName"],
-                quantity=result["quantity"],
-                lot=result["lot"],
-                expirationDate=result["expirationDate"]
+                productID=result["product_info"]["product_id"],
+                productName=result["product_info"]["product_name"],
+                quantity=result["product_info"]["quantity"],
+                lot=result["product_info"]["lot_number"],
+                expirationDate=str(result["product_info"]["exp_date"])
             )
         else:
             # Producto no existe - generar audio
@@ -210,6 +223,49 @@ async def check_barcode(request: BarcodeRequest):
         logger.error(f"❌ Error en check_barcode: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
+@app.post("/api/save_product", response_model=SaveResponse)
+async def save_product(request: ProductRequest):
+    """
+    Guarda o actualiza un producto en la base de datos
+    """
+    try:
+        logger.info(f"💾 Guardando producto: {request.barcode}")
+        
+        result = sf.check_barcode_exists(request.barcode.strip())
+
+        if result["exists"]:
+            logger.info("⚠️ El producto ya existe. Actualizando información.")
+            if sf.update_existing_product(barcode=request.barcode.strip(), product_id=request.productID, product_name=request.productName, quantity=request.quantity, lot_number=request.lot, exp_date=request.expirationDate)["success"]:
+                logger.info("✅ Producto actualizado correctamente.")
+                return SaveResponse(
+                    success=True,
+                    message="Producto guardado exitosamente"
+                )
+            else:
+                logger.error("❌ Error actualizando el producto existente.")
+                raise HTTPException(status_code=500, detail="Error actualizando el producto existente")
+        else:
+            logger.info("🆕 Producto nuevo. Insertando en la base de datos.")
+            single_product_dict = {
+                'barcode': request.barcode.strip(),
+                'product_id': request.productID,
+                'product_name': request.productName,
+                'lot_number': request.lot,
+                'quantity': request.quantity,
+                'exp_date': request.expirationDate
+            }
+            if sf.add_product_data(single_product_dict):
+                logger.info("✅ Producto insertado correctamente.")
+                return SaveResponse(
+                    success=True,
+                    message="Producto guardado exitosamente"
+                )
+            else:
+                logger.error("❌ Error insertando el nuevo producto.")
+                raise HTTPException(status_code=500, detail="Error insertando el nuevo producto")            
+    except Exception as e:
+        logger.error(f"❌ Error en save_product: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
 # Endpoint de salud
 @app.get("/api/health")
@@ -228,6 +284,8 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    if not sf.connect():
+        print("❌ Failed to connect to Snowflake. Please check your credentials.")
     print("🚀 Iniciando servidor FastAPI...")
     print("📱 Frontend disponible en: http://localhost:8000/index.html")
     print("🔮 Predicciones en: http://localhost:8000/predictions")
