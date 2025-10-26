@@ -9,6 +9,9 @@ import os
 import random
 from aidata.Random_Forest_Regression import AirlineConsumptionPredictor
 import pandas as pd
+from typing import Optional
+from snowflake_manager import snowflake_manager
+from elevenlabs_manager import elevenlabs_manager
 
 predictor = AirlineConsumptionPredictor.load_trained_model("airline_consumption_model")
 if predictor is None:
@@ -39,6 +42,18 @@ class PredictRequest(BaseModel):
     passenger_count: int
     product_name: List[str]
     unit_cost: List[float]
+
+class BarcodeResponse(BaseModel):
+    exists: bool
+    productID: Optional[str] = None
+    productName: Optional[str] = None
+    quantity: Optional[int] = None
+    lot: Optional[str] = None
+    expirationDate: Optional[str] = None
+    audio_base64: Optional[str] = None
+
+class BarcodeRequest(BaseModel):
+    barcode: str
 
 # Ruta principal - sirve el frontend
 @app.get("/index.html")
@@ -151,6 +166,50 @@ async def predict_consumption(data: PredictRequest):
     except Exception as e:
         logger.error(f"❌ Error en predict_consumption: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+    
+@app.post("/api/check_barcode", response_model=BarcodeResponse)
+async def check_barcode(request: BarcodeRequest):
+    """
+    Verifica si un código de barras existe en la base de datos
+    """
+    logger.info(f"🔍 Verificando barcode: {request.barcode}")
+    try:
+        logger.info(f"🔍 Verificando barcode: {request.barcode}")
+        
+        # Verificar en Snowflake
+        
+        result = snowflake_manager.check_barcode_exists(request.barcode)
+        
+        if result is None:
+            raise HTTPException(status_code=500, detail="Error conectando a la base de datos")
+        
+        if result["exists"]:
+            # Producto existe
+            logger.info(f"✅ Producto encontrado: {result['productName']}")
+            return BarcodeResponse(
+                exists=True,
+                productID=result["productID"],
+                productName=result["productName"],
+                quantity=result["quantity"],
+                lot=result["lot"],
+                expirationDate=result["expirationDate"]
+            )
+        else:
+            # Producto no existe - generar audio
+            logger.info("❌ Producto no encontrado - generando audio")
+            audio_text = "El producto no está en la base de datos"
+            audio_base64 = elevenlabs_manager.text_to_speech_base64(audio_text)
+            
+            return BarcodeResponse(
+                exists=False,
+                audio_base64=audio_base64
+            )
+    
+            
+    except Exception as e:
+        logger.error(f"❌ Error en check_barcode: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
 
 # Endpoint de salud
 @app.get("/api/health")
