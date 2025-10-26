@@ -633,10 +633,11 @@
                             <input type="date" id="expirationDate" name="expirationDate">
                         </div>
                     </div>
-                    <div class="form-actions">
-                        <button type="button" id="linkBtn" class="btn link-btn">Link Barcode</button>
-                        <button type="button" id="saveBtn" class="btn save-btn">Save Product</button>
-                    </div>
+                     <div class="form-actions" style="display: flex; justify-content: center;">
+                         <!-- Link Barcode button - code remains but hidden -->
+                         <button type="button" id="linkBtn" class="btn link-btn" style="display: none;">Link Barcode</button>
+                         <button type="button" id="saveBtn" class="btn save-btn" style="max-width: 300px; width: 100%;">Save Product</button>
+                     </div>
                 </form>
             </div>
           </div>
@@ -791,16 +792,16 @@
               console.log('🔍 Backend response:', data); // Debug log
               
               if (data.exists) {
-                  // Product exists - autofill ProductID and Product Name
+                  // Product exists - autofill ONLY ProductID and Product Name
                   productIDInput.value = data.productID || '';
                   productNameInput.value = data.productName || '';
                   
-                  // Optionally fill other fields if they exist
-                  if (data.lot) lotInput.value = data.lot;
-                  if (data.quantity) quantityInput.value = data.quantity;
-                  if (data.expirationDate) expirationDateInput.value = data.expirationDate;
+                  // DO NOT autofill lot, quantity, or expiration date - leave them empty for new entries
+                  lotInput.value = '';
+                  quantityInput.value = '';
+                  expirationDateInput.value = '';
                   
-                  updateStatus('✅ Product found in database', 'scanning');
+                  updateStatus('✅ Product found - Fill in Lot#, Quantity, and Expiration Date', 'scanning');
                   
                   // Play audio if available
                   if (data.audio_base64) {
@@ -810,8 +811,8 @@
                   // Product doesn't exist
                   productIDInput.value = '';
                   productNameInput.value = '';
-                  productIDInput.placeholder = 'No existe';
-                  productNameInput.placeholder = 'No existe';
+                  productIDInput.placeholder = 'Does not Exist';
+                  productNameInput.placeholder = 'Does not Exist';
 
                   updateStatus('❌ Product not found in database', 'error');
                   
@@ -1453,7 +1454,7 @@
       chatInput.addEventListener('keypress', function (e) {
           if (e.key === 'Enter') {
               sendChatMessage();
-          }
+        }
       });
     </script>
 

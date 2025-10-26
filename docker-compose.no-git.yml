@@ -1,15 +1,24 @@
+# Docker Compose configuration WITHOUT git
+# Run your Docker Hub image with environment variables
+
 services:
   smart-intelligence-api:
-    build: .
+    # Use your Docker Hub image
+    image: TU_USERNAME/hackmty_smart_intelligence:latest
+    
     container_name: smart-intelligence-api
     ports:
       - "8001:8001"
+    
+    # Pass environment variables directly (no .env file needed)
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
-      # API Keys
+      
+      # API Keys (replace with your actual keys)
       - GEMINI_API_KEY=AIzaSyDYrBDDTEXVzbb2xAlr2NxZDY4Fqoh4ORw
       - ELEVENLABS_API_KEY=sk_9d1375e7e03e0c325429bf29ac55ee9e8b7d1c932a13cd77
+      
       # Snowflake credentials
       - SNOWFLAKE_ACCOUNT=HQVIWDY-CG89891
       - SNOWFLAKE_USER=DIEGOGM
@@ -17,12 +26,7 @@ services:
       - SNOWFLAKE_WAREHOUSE=SNOWFLAKE_LEARNING_WH
       - SNOWFLAKE_DATABASE=SNOWFLAKE_LEARNING_DB
       - SNOWFLAKE_SCHEMA=PUBLIC
-    volumes:
-      # Mount .env file if it exists (commented to avoid Docker mounting issues)
-      # - ./.env:/app/backend/.env:ro
-      # Optional: Mount data directories for persistence
-      - ./backend/aidata:/app/backend/aidata:ro
-      - ./frontend/media_files:/app/frontend/media_files:ro
+    
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
@@ -34,3 +38,4 @@ services:
 networks:
   default:
     name: smart-intelligence-network
+
