@@ -340,6 +340,56 @@ sudo systemctl restart nginx
 
 ---
 
+## 🌐 Pasos Rápidos: Conectar smartplating.tech (Dominio + HTTPS)
+
+1) DNS (en tu proveedor)
+- Crea estos registros (TTL mínimo permitido por tu panel, por ejemplo 7200):
+   - A @ → 13.218.229.125
+   - A www → 13.218.229.125
+
+2) Verificar propagación (en EC2)
+```bash
+nslookup smartplating.tech
+nslookup www.smartplating.tech
+```
+Debe devolver 13.218.229.125.
+
+3) Nginx (en EC2)
+```bash
+sudo nano /etc/nginx/conf.d/smart-intelligence.conf
+```
+Poner:
+```nginx
+server_name smartplating.tech www.smartplating.tech;
+```
+Aplicar:
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+4) HTTPS con Certbot (en EC2)
+```bash
+sudo yum install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d smartplating.tech -d www.smartplating.tech --non-interactive --agree-tos --email TU_EMAIL
+sudo certbot renew --dry-run
+```
+
+5) Probar
+- https://smartplating.tech
+- https://smartplating.tech/exp_adding.html (cámara funciona con HTTPS)
+
+Troubleshooting rápido
+- Si DNS no resuelve aún: espera 5–30 min (o hasta TTL), verifica que ambos A (@ y www) apunten a 13.218.229.125.
+- Si Certbot falla: asegúrate que puerto 80 esté abierto y que `server_name` es el dominio correcto.
+- Logs útiles:
+```bash
+sudo tail -n 200 /var/log/nginx/error.log
+sudo docker-compose logs --tail=200
+```
+
+---
+
 ## 📞 Información de tu Instancia
 
 - **IP Pública**: 13.218.229.125
@@ -405,6 +455,146 @@ Ambos deben decir: `enabled`
    ```
 
 ---
+
+# 📘 Operaciones y Mantenimiento (Playbook)
+
+## 🚀 Flujo para actualizar la aplicación
+
+```bash
+# En EC2
+cd ~/Hackmty_Smart_Intelligence
+git pull
+sudo docker-compose -f docker-compose.prod.yml down
+sudo docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+## 🔁 Fix de reconexión automática (Snowflake)
+
+Si aplicas cambios a `backend/SnowflakeFinal.py` para reconectar cuando expire el token:
+
+```powershell
+# Desde tu PC (PowerShell)
+cd C:\Users\guill\Hackmty_Smart_Intelligence
+git add backend\SnowflakeFinal.py
+git commit -m "Add auto-reconnect for Snowflake token expiration"
+git push
+```
+
+```bash
+# En EC2
+cd ~/Hackmty_Smart_Intelligence
+git pull
+sudo docker-compose -f docker-compose.prod.yml down
+sudo docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+## 🔒 SSL / HTTPS
+
+```bash
+# Verificar renovación automática
+sudo certbot renew --dry-run
+
+# Renovar manualmente si fuese necesario
+sudo certbot renew
+
+# Reiniciar Nginx tras renovar (opcional)
+sudo systemctl restart nginx
+```
+
+## 🌍 Elastic IP (IP fija recomendada)
+
+1. AWS Console → EC2 → Elastic IPs → Allocate Elastic IP
+2. Actions → Associate Elastic IP → Selecciona tu instancia
+3. Si cambia la IP, actualiza los registros DNS A (@ y www)
+
+Nota: Elastic IP es gratuita mientras esté asociada a una instancia en ejecución.
+
+## 🧠 Monitoreo rápido
+
+```bash
+# Estado de contenedores
+sudo docker-compose ps
+
+# Logs de la app
+sudo docker-compose logs -f
+
+# Nginx
+sudo systemctl status nginx
+sudo tail -f /var/log/nginx/error.log
+sudo tail -f /var/log/nginx/access.log
+
+# Recursos del sistema
+df -h
+free -h
+sudo docker stats
+```
+
+## 💾 Backups
+
+```bash
+# Crear backup comprimido
+cd ~
+tar -czf backup-$(date +%Y%m%d).tar.gz Hackmty_Smart_Intelligence/
+
+# Descargar a tu PC (PowerShell)
+scp -i "C:\\Users\\guill\\OneDrive\\Escritorio\\smart-intelligence-key.pem" \
+   ec2-user@13.218.229.125:~/backup-*.tar.gz \
+   C:\\Users\\guill\\Downloads\\
+```
+
+## 🔐 Buenas prácticas de seguridad
+
+- Mantener el sistema actualizado: `sudo yum update -y`
+- Security Group: permitir solo 22, 80, 443
+- Rotar API keys y considerar AWS Secrets Manager para producción
+- Restringir CORS en producción si aplica
+
+## 💰 Costos aproximados
+
+- EC2 t3.small: ~USD 15/mes
+- EBS 20GB: ~USD 2/mes
+- Transferencia de datos: variable
+- Total típico: USD 17–25/mes
+
+Reducir costos: usar t3.micro para baja carga; detener instancia cuando no se use (la IP cambia si no hay Elastic IP).
+
+## 🆘 Troubleshooting rápido
+
+```bash
+# Sitio caído
+sudo docker-compose ps
+sudo docker-compose logs --tail=200
+sudo systemctl status nginx
+
+# 502 Bad Gateway
+curl -I http://localhost:8001
+sudo tail -n 200 /var/log/nginx/error.log
+
+# DNS
+nslookup smartplating.tech
+nslookup www.smartplating.tech
+
+# SSL
+sudo tail -n 200 /var/log/letsencrypt/letsencrypt.log
+sudo certbot renew --dry-run
+
+# Poco espacio en disco
+df -h
+sudo docker system prune -a
+sudo journalctl --vacuum-time=7d
+
+# Snowflake token expirado (con reconexión automática). Si persiste:
+sudo docker-compose restart
+```
+
+## 🔗 URLs clave (dominio)
+
+- Sitio: https://smartplating.tech
+- API Docs: https://smartplating.tech/docs
+- Dashboard: https://smartplating.tech/exp_dashboard.html
+- Predicciones: https://smartplating.tech/pre_flight_predictions.html
+- Scanner (cámara): https://smartplating.tech/exp_adding.html
+
 
 ## 📚 Documentación Adicional
 
