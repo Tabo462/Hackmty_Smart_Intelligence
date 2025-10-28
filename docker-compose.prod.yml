@@ -26,8 +26,8 @@ services:
     volumes:
       - ./backend/aidata:/app/backend/aidata:ro
       - ./frontend/media_files:/app/frontend/media_files:ro
-      # Mount .env file
-      - ./.env:/app/backend/.env:ro
+      # Mount .env file to project root so load_dotenv finds it (/app/.env)
+      - ./.env:/app/.env:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
       interval: 30s
