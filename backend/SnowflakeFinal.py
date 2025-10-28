@@ -106,7 +106,7 @@ class SnowflakeConnection:
     
     def execute_query(self, sql, fetch=True, params=None):
         """
-        Execute SQL query with optional parameters
+        Execute SQL query with optional parameters and auto-reconnect
         
         Args:
             sql: SQL query string
@@ -129,9 +129,35 @@ class SnowflakeConnection:
                 return None
                 
         except Exception as e:
-            print(f"❌ Query execution failed: {e}")
-            print(f"   SQL: {sql[:100]}...")
-            return None
+            error_message = str(e)
+            # Check if it's an authentication/token expiration error
+            if "390114" in error_message or "Authentication token has expired" in error_message or "Invalid access token" in error_message:
+                print("⚠️  Snowflake token expired. Reconnecting...")
+                self.disconnect()
+                if self.connect():
+                    print("✅ Reconnected successfully. Retrying query...")
+                    # Retry the query once after reconnection
+                    try:
+                        if params:
+                            self.cursor.execute(sql, params)
+                        else:
+                            self.cursor.execute(sql)
+                        
+                        if fetch:
+                            results = self.cursor.fetchall()
+                            return results
+                        else:
+                            return None
+                    except Exception as retry_error:
+                        print(f"❌ Query failed after reconnection: {retry_error}")
+                        return None
+                else:
+                    print("❌ Failed to reconnect to Snowflake")
+                    return None
+            else:
+                print(f"❌ Query execution failed: {e}")
+                print(f"   SQL: {sql[:100]}...")
+                return None
     
     def query_to_dataframe(self, sql):
         """Execute query and return as pandas DataFrame"""
